@@ -10,6 +10,7 @@ Interactive docs are at http://localhost:8000/docs.
 from __future__ import annotations
 
 import logging
+import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -75,12 +76,26 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
             await connection.execute(text("SELECT 1"))
         logger.info("Database connection OK.")
     except Exception as exc:  # noqa: BLE001
-        logger.warning(
-            "Could not reach the database (%s). Create it and run migrations:\n"
-            "    createdb lextract\n"
-            "    alembic upgrade head",
-            exc,
-        )
+        # Tailor the advice: "run createdb" is useless inside a container, and
+        # a localhost DSN in a deployed environment nearly always means the
+        # platform's database variable never reached the process.
+        if os.getenv("DATABASE_URL"):
+            hint = (
+                "DATABASE_URL is set but unreachable. Check the database service is "
+                "running and that the value points at its INTERNAL host, not a "
+                "localhost or public-proxy address."
+            )
+        elif "localhost" in settings.database_url or "127.0.0.1" in settings.database_url:
+            hint = (
+                "DATABASE_URL is NOT set, so the local-development default "
+                "(localhost:5432) was used — there is no database at that address "
+                "in a container. On Railway add a PostgreSQL service and set "
+                "DATABASE_URL=${{Postgres.DATABASE_URL}}; on Render paste the "
+                "internal connection string."
+            )
+        else:
+            hint = "Run: createdb lextract && alembic upgrade head"
+        logger.warning("Could not reach the database (%s). %s", exc, hint)
 
     yield
     await dispose_engine()

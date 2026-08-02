@@ -19,7 +19,10 @@ echo "────────────────────────�
 echo " Lextract API"
 echo "──────────────────────────────────────────────"
 echo " port          : ${PORT}"
-echo " database set  : $([ -n "${DATABASE_URL:-}" ] && echo yes || echo 'NO — set DATABASE_URL')"
+ # Show the host we will actually dial, password stripped. "Is the variable set"
+ # is not the useful question — "does it point somewhere real" is.
+ DB_TARGET=$(printf '%s' "${DATABASE_URL:-}" | sed -E 's#://([^:@/]+):[^@]*@#://\1:***@#')
+ echo " database url  : ${DB_TARGET:-<UNSET — will fall back to localhost and fail>}"
 echo " cors origins  : ${CORS_ORIGINS:-<default: localhost only>}"
 echo " providers     : ${ENABLED_PROVIDERS:-<all>}"
 echo "──────────────────────────────────────────────"
