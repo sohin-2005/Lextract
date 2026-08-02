@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#04A1E5" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F2F0E9" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0F1215" />
     <title>Lextract — Extract. Compare. Evaluate.</title>
     <meta
       name="description"
@@ -12,9 +13,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+    <script>
+      // Applied before first paint so a dark-mode user never sees a white flash.
+      // Mirrors the logic in src/hooks/useTheme.js.
+      (function () {
+        try {
+          var stored = localStorage.getItem('lextract-theme')
+          var dark =
+            stored === 'dark' ||
+            (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) document.documentElement.classList.add('dark')
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

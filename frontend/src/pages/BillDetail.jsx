@@ -131,7 +131,7 @@ export default function BillDetail() {
   if (!bill) {
     return (
       <div className="card px-6 py-20 text-center">
-        <p className="mb-4 text-sm text-rose-600">{error || 'Receipt not found.'}</p>
+        <p className="mb-4 text-sm text-rose-600 dark:text-rose-400">{error || 'Receipt not found.'}</p>
         <Link to="/" className="btn-secondary">
           <ArrowLeft size={15} /> Back to dashboard
         </Link>
@@ -145,14 +145,14 @@ export default function BillDetail() {
         <div>
           <Link
             to="/"
-            className="mb-1.5 inline-flex items-center gap-1 text-xs font-medium text-slate-500 transition-colors hover:text-brand-700"
+            className="mb-1.5 inline-flex items-center gap-1 text-xs font-medium text-muted dark:text-ink-300 transition-colors hover:text-teal-700 dark:hover:text-teal-300"
           >
             <ArrowLeft size={13} /> All receipts
           </Link>
-          <h1 className="text-xl font-semibold tracking-[-0.015em] text-slate-900">
+          <h1 className="text-xl font-semibold tracking-[-0.015em] text-ink-900 dark:text-paper-50">
             {bill.filename}
           </h1>
-          <p className="tnum mt-1 text-xs text-slate-500">
+          <p className="tnum mt-1 text-xs text-muted dark:text-ink-300">
             {(bill.size_bytes / 1024).toFixed(0)} KB · {bill.content_type} · uploaded{' '}
             {new Date(bill.uploaded_at).toLocaleString()}
           </p>
@@ -212,7 +212,7 @@ export default function BillDetail() {
       </div>
 
       {error && (
-        <p className="flex items-start gap-2.5 rounded-card border border-rose-100 bg-rose-50 p-3.5 text-sm text-rose-700">
+        <p className="flex items-start gap-2.5 rounded-card border border-rose-100 bg-rose-50 p-3.5 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <span>{error}</span>
         </p>
@@ -221,12 +221,12 @@ export default function BillDetail() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
         <div className="space-y-6">
           <section className="card overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-3">
-              <ImageIcon size={15} className="text-brand-500" />
+            <div className="flex items-center gap-2 border-b border-paper-200 dark:border-ink-800 px-5 py-3">
+              <ImageIcon size={15} className="text-teal-600 dark:text-teal-400" />
               <span className="section-title">Original receipt</span>
             </div>
             {imageBroken ? (
-              <div className="flex flex-col items-center gap-2 p-12 text-slate-400">
+              <div className="flex flex-col items-center gap-2 p-12 text-ink-300 dark:text-ink-400">
                 <ImageOff size={26} />
                 <p className="text-xs">Image file is no longer on disk.</p>
               </div>
@@ -235,7 +235,7 @@ export default function BillDetail() {
                 <img
                   src={imageUrl(bill.id)}
                   alt={`Handwritten bill: ${bill.filename}`}
-                  className="max-h-[520px] w-full bg-slate-50 object-contain transition-transform duration-300 hover:scale-[1.015]"
+                  className="max-h-[520px] w-full bg-paper-100 dark:bg-ink-800 object-contain transition-transform duration-300 hover:scale-[1.015]"
                   onError={() => setImageBroken(true)}
                 />
               </a>
@@ -259,10 +259,10 @@ export default function BillDetail() {
           <section className="card p-6">
             <div className="mb-5">
               <h2 className="section-title flex items-center gap-2">
-                <Table2 size={17} className="text-brand-500" />
+                <Table2 size={17} className="text-teal-600 dark:text-teal-400" />
                 Model comparison
               </h2>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-muted dark:text-ink-300">
                 Rows are fields, columns are models. Read across a row to see which fields are hard
                 for every model.
               </p>
@@ -277,16 +277,16 @@ export default function BillDetail() {
           {successful.length > 0 && (
             <section className="card p-6">
               <h2 className="section-title mb-1">Push to Zoho Books</h2>
-              <p className="mb-5 text-xs text-slate-500">
+              <p className="mb-5 text-xs text-muted dark:text-ink-300">
                 Creates an expense from the extracted vendor, date and amount. Pick the model you
                 trust most for this receipt.
               </p>
               <div className="space-y-4">
                 {successful.map((r) => (
-                  <div key={r.id} className="rounded-xl border border-slate-200 bg-white/60 p-3.5">
+                  <div key={r.id} className="rounded-xl border border-paper-300 dark:border-ink-700 bg-white/70 dark:bg-ink-800/50 p-3.5">
                     <p className="mb-2.5 flex flex-wrap items-center gap-2 text-xs">
-                      <span className="font-mono font-semibold text-slate-800">{r.model_name}</span>
-                      <span className="tnum text-slate-500">
+                      <span className="font-mono font-semibold text-ink-800 dark:text-paper-100">{r.model_name}</span>
+                      <span className="tnum text-muted dark:text-ink-300">
                         {r.vendor_name || '—'} · {r.currency} {r.amount ?? '—'} · {r.date || '—'}
                       </span>
                     </p>

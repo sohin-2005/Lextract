@@ -14,9 +14,9 @@ const FIELDS = [
  *  Deliberately not the brand ramp: correctness is a different axis from brand,
  *  and colouring a failing field blue would bury it. */
 function scoreStyle(score) {
-  if (score >= 0.9) return 'bg-emerald-50 text-emerald-700'
-  if (score >= 0.7) return 'bg-amber-50 text-amber-700'
-  return 'bg-rose-50 text-rose-700'
+  if (score >= 0.9) return 'bg-teal-50 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
+  if (score >= 0.7) return 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
+  return 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300'
 }
 
 function formatValue(value) {
@@ -82,7 +82,7 @@ export default function ModelComparison({ results, groundTruth, evaluations = {}
 
   if (!results.length) {
     return (
-      <p className="py-10 text-center text-sm text-slate-500">
+      <p className="py-10 text-center text-sm text-muted dark:text-ink-300">
         No extractions yet. Run one from the dashboard or with the button above.
       </p>
     )
@@ -91,8 +91,8 @@ export default function ModelComparison({ results, groundTruth, evaluations = {}
   return (
     <div className="space-y-4">
       {rerunCount > 0 && (
-        <p className="flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs text-slate-500">
-          <History size={14} className="mt-px shrink-0 text-brand-500" />
+        <p className="flex items-start gap-2 rounded-xl border border-paper-200 dark:border-ink-800 bg-paper-100 dark:bg-ink-800 p-3 text-xs text-muted dark:text-ink-300">
+          <History size={14} className="mt-px shrink-0 text-teal-600 dark:text-teal-400" />
           <span>
             Showing the newest run per model. Earlier runs are kept in the raw responses below
             and are excluded from scoring, so a re-run never counts twice.
@@ -106,18 +106,18 @@ export default function ModelComparison({ results, groundTruth, evaluations = {}
             <tr className="table-head">
               <th className="w-36 pb-2.5 pr-4 font-semibold">Field</th>
               {groundTruth && (
-                <th className="pb-2.5 pr-4 font-semibold text-brand-700">Ground truth</th>
+                <th className="pb-2.5 pr-4 font-semibold text-teal-700 dark:text-teal-300">Ground truth</th>
               )}
               {successful.map((r) => (
                 <th key={r.id} className="pb-2.5 pr-4 font-semibold">
-                  <span className="block font-mono text-[11px] normal-case text-slate-800">
+                  <span className="block font-mono text-[11px] normal-case text-ink-800 dark:text-paper-100">
                     {r.model_name}
                   </span>
-                  <span className="flex items-center gap-1.5 text-[10px] font-normal normal-case text-slate-400">
+                  <span className="flex items-center gap-1.5 text-[10px] font-normal normal-case text-ink-300 dark:text-ink-400">
                     {r.provider}
                     {runCounts[r.model_name] > 1 && (
                       <span
-                        className="rounded bg-brand-50 px-1.5 py-px font-medium text-brand-700"
+                        className="rounded bg-teal-50 dark:bg-teal-900/25 px-1.5 py-px font-medium text-teal-700 dark:text-teal-300"
                         title={`${runCounts[r.model_name]} runs recorded; showing the newest. Earlier runs are in the raw responses below.`}
                       >
                         run {runCounts[r.model_name]}
@@ -129,16 +129,16 @@ export default function ModelComparison({ results, groundTruth, evaluations = {}
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-paper-200 dark:divide-ink-800">
             {FIELDS.map(({ key, label }) => (
               <tr key={key} className="align-top">
-                <td className="py-3 pr-4 text-xs font-semibold text-slate-500">{label}</td>
+                <td className="py-3 pr-4 text-xs font-semibold text-muted dark:text-ink-300">{label}</td>
 
                 {groundTruth && (
-                  <td className="bg-brand-50/40 py-3 pr-4">
-                    <span className="font-medium text-slate-800">
+                  <td className="bg-teal-50/60 py-3 pr-4 dark:bg-teal-900/20">
+                    <span className="font-medium text-ink-800 dark:text-paper-100">
                       {formatValue(groundTruth[key]) ?? (
-                        <span className="text-xs italic text-slate-400">null</span>
+                        <span className="text-xs italic text-ink-300 dark:text-ink-400">null</span>
                       )}
                     </span>
                   </td>
@@ -150,7 +150,7 @@ export default function ModelComparison({ results, groundTruth, evaluations = {}
                   return (
                     <td key={r.id} className="py-3 pr-4">
                       <div className="flex flex-col gap-1">
-                        <span className={value ? 'text-slate-800' : 'text-xs italic text-slate-400'}>
+                        <span className={value ? 'text-ink-800 dark:text-paper-100' : 'text-xs italic text-ink-300 dark:text-ink-400'}>
                           {value ?? 'null'}
                         </span>
                         {score && (
@@ -169,24 +169,24 @@ export default function ModelComparison({ results, groundTruth, evaluations = {}
             ))}
           </tbody>
 
-          <tfoot className="border-t border-slate-200">
+          <tfoot className="border-t border-paper-300 dark:border-ink-700">
             <tr>
-              <td className="py-3 pr-4 text-xs font-semibold text-slate-600">
+              <td className="py-3 pr-4 text-xs font-semibold text-ink-600 dark:text-ink-200">
                 <span className="flex items-center gap-1">
                   <Target size={12} /> Accuracy
                 </span>
               </td>
-              {groundTruth && <td className="py-3 pr-4 text-xs text-slate-400">—</td>}
+              {groundTruth && <td className="py-3 pr-4 text-xs text-ink-300 dark:text-ink-400">—</td>}
               {successful.map((r) => {
                 const overall = evaluations[r.id]?.overall_accuracy
                 return (
                   <td key={r.id} className="py-3 pr-4 font-semibold">
                     {overall === undefined ? (
-                      <span className="text-xs font-normal text-slate-400">not evaluated</span>
+                      <span className="text-xs font-normal text-ink-300 dark:text-ink-400">not evaluated</span>
                     ) : (
                       <span className="flex flex-col gap-1.5">
                         <span
-                          className={`tnum ${overall >= 0.9 ? 'text-emerald-600' : 'text-slate-900'}`}
+                          className={`tnum ${overall >= 0.9 ? 'text-teal-700 dark:text-teal-300' : 'text-ink-900 dark:text-paper-50'}`}
                         >
                           {(overall * 100).toFixed(1)}%
                         </span>
@@ -200,33 +200,33 @@ export default function ModelComparison({ results, groundTruth, evaluations = {}
               })}
             </tr>
             <tr>
-              <td className="py-3 pr-4 text-xs font-semibold text-slate-600">
+              <td className="py-3 pr-4 text-xs font-semibold text-ink-600 dark:text-ink-200">
                 <span className="flex items-center gap-1">
                   <Clock size={12} /> Latency
                 </span>
               </td>
-              {groundTruth && <td className="py-3 pr-4 text-xs text-slate-400">—</td>}
+              {groundTruth && <td className="py-3 pr-4 text-xs text-ink-300 dark:text-ink-400">—</td>}
               {successful.map((r) => (
-                <td key={r.id} className="py-3 pr-4 text-slate-700">
+                <td key={r.id} className="py-3 pr-4 text-ink-700 dark:text-paper-200">
                   {(r.latency_ms / 1000).toFixed(2)}s
                 </td>
               ))}
             </tr>
             <tr>
-              <td className="py-3 pr-4 text-xs font-semibold text-slate-600">
+              <td className="py-3 pr-4 text-xs font-semibold text-ink-600 dark:text-ink-200">
                 <span className="flex items-center gap-1">
                   <DollarSign size={12} /> Cost
                 </span>
               </td>
-              {groundTruth && <td className="py-3 pr-4 text-xs text-slate-400">—</td>}
+              {groundTruth && <td className="py-3 pr-4 text-xs text-ink-300 dark:text-ink-400">—</td>}
               {successful.map((r) => (
                 <td key={r.id} className="py-3 pr-4">
-                  <span className="tnum text-slate-700">${r.cost_usd.toFixed(5)}</span>
-                  <span className="block text-[11px] text-slate-400">
+                  <span className="tnum text-ink-700 dark:text-paper-200">${r.cost_usd.toFixed(5)}</span>
+                  <span className="block text-[11px] text-ink-300 dark:text-ink-400">
                     ${(r.cost_usd * 100).toFixed(2)} / 100 bills
                   </span>
                   <span
-                    className="block text-[10px] text-slate-400"
+                    className="block text-[10px] text-ink-300 dark:text-ink-400"
                     title={
                       r.token_source === 'provider'
                         ? 'Token counts reported by the provider — exact.'
@@ -245,7 +245,7 @@ export default function ModelComparison({ results, groundTruth, evaluations = {}
       {failed.map((r) => (
         <p
           key={r.id}
-          className="flex items-start gap-2 rounded-xl border border-rose-100 bg-rose-50 p-3 text-sm text-rose-700"
+          className="flex items-start gap-2 rounded-xl border border-rose-100 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
         >
           <AlertTriangle size={16} className="mt-0.5 shrink-0" />
           <span>

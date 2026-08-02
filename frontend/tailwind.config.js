@@ -1,95 +1,96 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  // Class-based so the toggle can override the OS preference. See ThemeToggle.
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
         /**
-         * Brand ramp built around #04A1E5.
+         * Brand palette, taken from the logo.
          *
-         * 500 is the accent proper. 600/700 exist because 500 on white is
-         * ~2.9:1 — fine for large text, borders and fills, but it fails WCAG AA
-         * for body copy. Small text on light backgrounds uses 700.
+         *   Ink    #14181C  wordmark, mark, body text
+         *   Teal   #0EA47E  accent — scores, CTAs, active state
+         *   Paper  #F2F0E9  app surface, icon tile
+         *   Muted  #6A6E72  tagline, secondary labels
+         *
+         * The ramps around each are derived, not invented: they exist so a
+         * border, a hover tint and a disabled state stay in the same family
+         * instead of falling back to a generic grey.
          */
-        brand: {
-          50: '#EFF9FE',
-          100: '#D5F0FC',
-          200: '#A9E1F9',
-          300: '#6FCDF3',
-          400: '#2FB5EC',
-          500: '#04A1E5',
-          600: '#0384BE',
-          700: '#056A98',
-          800: '#0A587C',
-          900: '#0D4A67',
+        ink: {
+          50: '#F4F5F6',
+          100: '#E4E6E8',
+          200: '#C7CACD',
+          300: '#9BA0A5',
+          400: '#6A6E72', // = muted
+          500: '#4A4F54',
+          600: '#33383D',
+          700: '#24292E',
+          800: '#1A1F24',
+          900: '#14181C', // = ink
+          950: '#0F1215',
         },
+        teal: {
+          50: '#E7F6F1',
+          100: '#C6EBDF',
+          200: '#8FD9C2',
+          300: '#4FC3A2',
+          400: '#1BB58C',
+          500: '#0EA47E', // = accent
+          600: '#0B8468',
+          700: '#0A6B55',
+          800: '#085743',
+          900: '#064334',
+        },
+        paper: {
+          50: '#FBFAF7',
+          100: '#F2F0E9', // = paper
+          200: '#E8E5DB',
+          300: '#DAD6C9',
+          400: '#C4BFAE',
+        },
+        muted: '#6A6E72',
       },
       fontFamily: {
-        // Orbitron is reserved for the wordmark. Using it for UI would read as
-        // sci-fi, which is the opposite of the tone this tool needs.
-        display: ['Orbitron', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // The wordmark is a bold grotesque, matching the supplied lockup.
+        display: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
-      borderRadius: {
-        card: '18px',
-        panel: '20px',
-      },
+      borderRadius: { card: '18px', panel: '20px' },
       boxShadow: {
-        // Two-layer shadows: a tight contact shadow plus a wide diffuse one.
-        // A single large blur reads as a drop shadow; two layers read as depth.
-        card: '0 1px 2px rgba(15, 39, 56, 0.04), 0 8px 24px -12px rgba(15, 39, 56, 0.12)',
-        lift: '0 2px 4px rgba(15, 39, 56, 0.05), 0 16px 40px -16px rgba(15, 39, 56, 0.18)',
-        brand: '0 2px 6px rgba(4, 161, 229, 0.20), 0 14px 32px -14px rgba(4, 161, 229, 0.45)',
-        inset: 'inset 0 1px 0 rgba(255, 255, 255, 0.6)',
+        // Warm-tinted rather than neutral grey: a cool shadow on paper reads
+        // as dirt. Two layers — tight contact plus wide diffuse — read as depth.
+        card: '0 1px 2px rgba(20, 24, 28, 0.04), 0 8px 24px -12px rgba(20, 24, 28, 0.14)',
+        lift: '0 2px 4px rgba(20, 24, 28, 0.05), 0 16px 40px -16px rgba(20, 24, 28, 0.20)',
+        accent: '0 2px 6px rgba(14, 164, 126, 0.20), 0 14px 32px -14px rgba(14, 164, 126, 0.45)',
       },
       backgroundImage: {
-        /**
-         * Two brand gradients, split by whether white text sits on top.
-         *
-         * `brand-gradient` is the specified #05A9E8 -> #08B4EC. White on it is
-         * only 2.4:1, which fails WCAG AA, so it is used exclusively for
-         * decoration: icon tiles, meter fills, chart bars, checkbox fills.
-         *
-         * `brand-deep` is the same hue pulled down the ramp until white clears
-         * 4.9:1. Anything carrying white text — primary buttons, the featured
-         * stat card — uses it. Same colour family, legible on a projector and
-         * for low-vision users.
-         */
-        'brand-gradient': 'linear-gradient(135deg, #05A9E8 0%, #08B4EC 100%)',
-        'brand-deep': 'linear-gradient(135deg, #05658F 0%, #0378AC 100%)',
-        'brand-soft': 'linear-gradient(135deg, #F2FAFE 0%, #E7F5FD 100%)',
+        'teal-gradient': 'linear-gradient(135deg, #0EA47E 0%, #14B88E 100%)',
+        'teal-soft': 'linear-gradient(135deg, #EFF8F4 0%, #E3F3ED 100%)',
       },
       keyframes: {
         'fade-up': {
           '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        'fade-out': {
-          '0%': { opacity: '1' },
-          '100%': { opacity: '0', visibility: 'hidden' },
-        },
+        'fade-out': { '0%': { opacity: '1' }, '100%': { opacity: '0', visibility: 'hidden' } },
         'logo-in': {
-          '0%': { opacity: '0', transform: 'translateY(14px) scale(0.97)', letterSpacing: '0.32em' },
-          '100%': { opacity: '1', transform: 'translateY(0) scale(1)', letterSpacing: '0.14em' },
+          '0%': { opacity: '0', transform: 'translateY(12px) scale(0.96)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
-        'caret': {
-          '0%, 45%': { opacity: '1' },
-          '50%, 95%': { opacity: '0' },
-          '100%': { opacity: '1' },
+        caret: { '0%,45%': { opacity: '1' }, '50%,95%': { opacity: '0' }, '100%': { opacity: '1' } },
+        ambience: {
+          '0%,100%': { transform: 'translate3d(0,0,0) scale(1)', opacity: '0.5' },
+          '50%': { transform: 'translate3d(0,-14px,0) scale(1.05)', opacity: '0.7' },
         },
-        'ambience': {
-          '0%, 100%': { transform: 'translate3d(0,0,0) scale(1)', opacity: '0.55' },
-          '50%': { transform: 'translate3d(0,-16px,0) scale(1.06)', opacity: '0.75' },
-        },
-        'shimmer': {
-          '100%': { transform: 'translateX(100%)' },
-        },
+        shimmer: { '100%': { transform: 'translateX(100%)' } },
       },
       animation: {
         'fade-up': 'fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both',
         'fade-out': 'fade-out 0.5s ease forwards',
-        'logo-in': 'logo-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'logo-in': 'logo-in 0.85s cubic-bezier(0.16, 1, 0.3, 1) both',
         caret: 'caret 1.05s steps(1) infinite',
         ambience: 'ambience 9s ease-in-out infinite',
         shimmer: 'shimmer 1.6s infinite',

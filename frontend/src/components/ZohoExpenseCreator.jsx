@@ -44,7 +44,7 @@ export default function ZohoExpenseCreator({ result, zohoStatus }) {
 
   if (expense?.sync_status === 'synced') {
     return (
-      <p className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 p-3.5 text-sm text-emerald-700">
+      <p className="flex items-center gap-2 rounded-xl border border-teal-100 bg-teal-50 p-3.5 text-sm text-teal-700 dark:border-teal-900/60 dark:bg-teal-900/25 dark:text-teal-300">
         <CheckCircle2 size={16} className="shrink-0" />
         <span>
           Synced to Zoho Books as expense{' '}
@@ -91,10 +91,10 @@ export default function ZohoExpenseCreator({ result, zohoStatus }) {
         </button>
       </div>
 
-      {blockedReason && <p className="text-[11px] text-slate-400">{blockedReason}</p>}
+      {blockedReason && <p className="text-[11px] text-ink-300 dark:text-ink-400">{blockedReason}</p>}
 
       {error && (
-        <p className="flex items-start gap-2 rounded-xl border border-rose-100 bg-rose-50 p-3 text-xs text-rose-700">
+        <p className="flex items-start gap-2 rounded-xl border border-rose-100 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
           <AlertCircle size={14} className="mt-0.5 shrink-0" />
           <span>{error}</span>
         </p>

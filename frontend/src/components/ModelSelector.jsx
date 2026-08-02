@@ -32,7 +32,7 @@ export default function ModelSelector({
 
   if (!providers.length) {
     return (
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-ink-300 dark:text-ink-400">
         No models available — add an API key to <code className="font-mono">backend/.env</code> and
         restart.
       </p>
@@ -49,16 +49,16 @@ export default function ModelSelector({
       {!compact && (
         <div className="flex items-center justify-between gap-3">
           <span className="eyebrow flex items-center gap-1.5">
-            <Cpu size={13} className="text-brand-500" />
+            <Cpu size={13} className="text-teal-600 dark:text-teal-400" />
             Models to run
           </span>
           <div className="flex items-center gap-2.5 text-xs">
-            <span className="tnum text-slate-400">
+            <span className="tnum text-ink-300 dark:text-ink-400">
               {selected.length}/{providers.length} selected
             </span>
             <button
               type="button"
-              className="font-medium text-brand-700 transition-colors hover:text-brand-500"
+              className="font-medium text-teal-700 dark:text-teal-300 transition-colors hover:text-teal-500"
               onClick={() => onChange(allSelected ? [] : providers.map((p) => p.id))}
             >
               {allSelected ? 'Clear' : 'Select all'}
@@ -83,8 +83,8 @@ export default function ModelSelector({
                 transition-all duration-150 active:scale-[0.985]
                 ${
                   isSelected
-                    ? 'border-brand-300 bg-brand-50 shadow-[0_1px_2px_rgba(4,161,229,0.10)]'
-                    : 'border-slate-200 bg-white hover:border-brand-200 hover:bg-brand-50/40'
+                    ? 'border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-900/25 shadow-[0_1px_2px_rgba(4,161,229,0.10)]'
+                    : 'border-paper-300 dark:border-ink-700 bg-white hover:border-teal-200 dark:hover:border-teal-800 hover:bg-teal-50/50 dark:hover:bg-teal-900/15'
                 }`}
             >
               <span
@@ -92,8 +92,8 @@ export default function ModelSelector({
                   border transition-all duration-150
                   ${
                     isSelected
-                      ? 'border-brand-500 bg-brand-gradient text-white'
-                      : 'border-slate-300 bg-white group-hover:border-brand-300'
+                      ? 'border-teal-500 bg-teal-gradient text-white'
+                      : 'border-paper-400 dark:border-ink-600 bg-white group-hover:border-teal-300'
                   }`}
                 aria-hidden="true"
               >
@@ -103,14 +103,14 @@ export default function ModelSelector({
               <span className="min-w-0">
                 <span
                   className={`block text-[13px] font-semibold leading-tight ${
-                    isSelected ? 'text-brand-800' : 'text-slate-700'
+                    isSelected ? 'text-teal-800 dark:text-teal-200' : 'text-ink-700 dark:text-paper-200'
                   }`}
                 >
                   {provider.label}
                 </span>
                 <span
                   className={`block truncate font-mono text-[10px] leading-tight ${
-                    isSelected ? 'text-brand-600' : 'text-slate-400'
+                    isSelected ? 'text-teal-700 dark:text-teal-300' : 'text-ink-300 dark:text-ink-400'
                   }`}
                 >
                   {modelId || provider.vendor}

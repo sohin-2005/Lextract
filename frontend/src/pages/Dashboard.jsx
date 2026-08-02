@@ -35,6 +35,8 @@ import {
   listBills,
 } from '../services/api.js'
 
+// Status uses the semantic badges, not the accent: teal means "scored well"
+// everywhere else in the UI, so reusing it for "uploaded" would blur the signal.
 const STATUS = {
   uploaded: { cls: 'badge-neutral', Icon: Clock, label: 'Ready' },
   processing: { cls: 'badge-warning', Icon: Loader2, label: 'Running' },
@@ -61,16 +63,16 @@ function StatusBadge({ status }) {
 function StatCard({ icon: Icon, label, value, hint, featured = false }) {
   if (featured) {
     return (
-      <div className="card-brand p-5">
+      <div className="card-accent p-5">
         <div className="relative z-10">
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.09em] text-white/90">
+            <span className="text-[11px] font-bold uppercase tracking-[0.09em] text-ink-900/70">
               {label}
             </span>
-            <Icon size={16} className="text-white/90" />
+            <Icon size={16} className="text-ink-900/60" />
           </div>
           <p className="tnum text-3xl font-semibold leading-none tracking-[-0.02em]">{value}</p>
-          {hint && <p className="mt-2 text-xs text-white/85">{hint}</p>}
+          {hint && <p className="mt-2 text-xs font-medium text-ink-900/70">{hint}</p>}
         </div>
       </div>
     )
@@ -80,24 +82,26 @@ function StatCard({ icon: Icon, label, value, hint, featured = false }) {
     <div className="card card-hover p-5">
       <div className="mb-3 flex items-center justify-between">
         <span className="eyebrow">{label}</span>
-        <Icon size={16} className="text-brand-500" />
+        <Icon size={16} className="text-teal-600 dark:text-teal-400" />
       </div>
-      <p className="tnum text-3xl font-semibold leading-none tracking-[-0.02em] text-slate-900">
+      <p className="tnum text-3xl font-semibold leading-none tracking-[-0.02em] text-ink-900 dark:text-paper-50">
         {value}
       </p>
-      {hint && <p className="mt-2 text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="mt-2 text-xs text-muted dark:text-ink-300">{hint}</p>}
     </div>
   )
 }
 
-const BAR_COLOURS = ['#04A1E5', '#08B4EC', '#6FCDF3', '#0384BE', '#A9E1F9']
+// Teal ramp for series colour. The leading model gets the strongest value;
+// later entries step back rather than compete for attention.
+const BAR_COLOURS = ['#0EA47E', '#1BB58C', '#4FC3A2', '#0B8468', '#8FD9C2']
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lift backdrop-blur">
-      <p className="mb-0.5 font-mono text-[11px] text-slate-500">{label}</p>
-      <p className="tnum text-sm font-semibold text-slate-900">{payload[0].value}% accuracy</p>
+    <div className="rounded-xl border border-paper-300 bg-white/95 px-3 py-2 shadow-lift backdrop-blur dark:border-ink-700 dark:bg-ink-800/95">
+      <p className="mb-0.5 font-mono text-[11px] text-muted dark:text-ink-300">{label}</p>
+      <p className="tnum text-sm font-semibold text-ink-900 dark:text-paper-50">{payload[0].value}% accuracy</p>
     </div>
   )
 }
@@ -120,10 +124,10 @@ function Leaderboard({ report, loading, onRefresh }) {
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
           <h2 className="section-title flex items-center gap-2">
-            <BarChart3 size={17} className="text-brand-500" />
+            <BarChart3 size={17} className="text-teal-600 dark:text-teal-400" />
             Model leaderboard
           </h2>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted dark:text-ink-300">
             Field-level accuracy against your ground truth, with cost extrapolated to 100 bills.
           </p>
         </div>
@@ -133,34 +137,38 @@ function Leaderboard({ report, loading, onRefresh }) {
       </div>
 
       {!rows.length ? (
-        <div className="rounded-card border border-dashed border-slate-200 bg-slate-50/60 px-6 py-12 text-center">
-          <Gauge size={24} className="mx-auto mb-3 text-slate-300" />
-          <p className="text-sm font-medium text-slate-600">No scored bills yet</p>
-          <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">
+        <div className="rounded-card border border-dashed border-paper-300 dark:border-ink-700 bg-paper-100/70 dark:bg-ink-800/60 px-6 py-12 text-center">
+          <Gauge size={24} className="mx-auto mb-3 text-ink-200 dark:text-ink-500" />
+          <p className="text-sm font-medium text-ink-600 dark:text-ink-200">No scored bills yet</p>
+          <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-muted dark:text-ink-300">
             Upload a receipt, run extraction, enter ground truth, then evaluate. The leaderboard
             fills in from there.
           </p>
         </div>
       ) : (
         <>
-          <div className="-ml-2 h-56 w-full">
+          <div className="-ml-2 h-56 w-full text-muted dark:text-ink-400">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 4, left: -14 }}>
-                <CartesianGrid strokeDasharray="4 4" stroke="#E2E8F0" vertical={false} />
+                <CartesianGrid
+                  strokeDasharray="4 4"
+                  className="stroke-paper-300 dark:stroke-ink-700"
+                  vertical={false}
+                />
                 <XAxis
                   dataKey="name"
-                  tick={{ fontSize: 11, fill: '#64748B' }}
-                  axisLine={{ stroke: '#E2E8F0' }}
+                  tick={{ fontSize: 11, fill: 'currentColor' }}
+                  axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   domain={[0, 100]}
                   unit="%"
-                  tick={{ fontSize: 11, fill: '#64748B' }}
+                  tick={{ fontSize: 11, fill: 'currentColor' }}
                   axisLine={false}
                   tickLine={false}
                 />
-                <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(4,161,229,0.06)' }} />
+                <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(14,164,126,0.08)' }} />
                 <Bar dataKey="accuracy" radius={[7, 7, 0, 0]} maxBarSize={64}>
                   {chartData.map((_, i) => (
                     <Cell key={i} fill={BAR_COLOURS[i % BAR_COLOURS.length]} />
@@ -184,21 +192,21 @@ function Leaderboard({ report, loading, onRefresh }) {
                   <th className="pb-2.5 font-semibold">Bills</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-paper-200 dark:divide-ink-800">
                 {rows.map((r, index) => (
-                  <tr key={r.model_name} className="transition-colors hover:bg-brand-50/40">
+                  <tr key={r.model_name} className="transition-colors hover:bg-teal-50/50 dark:hover:bg-teal-900/15">
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-2">
                         <span
                           className="h-2 w-2 shrink-0 rounded-full"
                           style={{ background: BAR_COLOURS[index % BAR_COLOURS.length] }}
                         />
-                        <span className="font-mono text-xs text-slate-700">{r.model_name}</span>
+                        <span className="font-mono text-xs text-ink-700 dark:text-paper-200">{r.model_name}</span>
                       </div>
                     </td>
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-2.5">
-                        <span className="tnum w-11 font-semibold text-slate-900">
+                        <span className="tnum w-11 font-semibold text-ink-900 dark:text-paper-50">
                           {(r.overall_accuracy * 100).toFixed(1)}%
                         </span>
                         <span className="meter w-20">
@@ -209,22 +217,22 @@ function Leaderboard({ report, loading, onRefresh }) {
                         </span>
                       </div>
                     </td>
-                    <td className="tnum py-3 pr-4 text-slate-600">
+                    <td className="tnum py-3 pr-4 text-ink-600 dark:text-ink-200">
                       {(r.fields.vendor_name.accuracy * 100).toFixed(0)}%
                     </td>
-                    <td className="tnum py-3 pr-4 text-slate-600">
+                    <td className="tnum py-3 pr-4 text-ink-600 dark:text-ink-200">
                       {(r.fields.amount.accuracy * 100).toFixed(0)}%
                     </td>
-                    <td className="tnum py-3 pr-4 text-slate-600">
+                    <td className="tnum py-3 pr-4 text-ink-600 dark:text-ink-200">
                       {(r.fields.date.accuracy * 100).toFixed(0)}%
                     </td>
-                    <td className="tnum py-3 pr-4 text-slate-600">
+                    <td className="tnum py-3 pr-4 text-ink-600 dark:text-ink-200">
                       {(r.avg_latency_ms / 1000).toFixed(2)}s
                     </td>
-                    <td className="tnum py-3 pr-4 text-slate-600">
+                    <td className="tnum py-3 pr-4 text-ink-600 dark:text-ink-200">
                       ${r.cost_per_100_bills_usd.toFixed(2)}
                     </td>
-                    <td className="tnum py-3 text-slate-600">{r.bills_evaluated}</td>
+                    <td className="tnum py-3 text-ink-600 dark:text-ink-200">{r.bills_evaluated}</td>
                   </tr>
                 ))}
               </tbody>
@@ -233,8 +241,8 @@ function Leaderboard({ report, loading, onRefresh }) {
 
           {report.recommendation && (
             <div className="card-tint mt-5 p-4">
-              <p className="eyebrow mb-1.5 text-brand-700">Recommendation</p>
-              <p className="text-[13px] leading-relaxed text-slate-700">{report.recommendation}</p>
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-teal-700 dark:text-teal-300">Recommendation</p>
+              <p className="text-[13px] leading-relaxed text-ink-700 dark:text-paper-200">{report.recommendation}</p>
             </div>
           )}
         </>
@@ -332,8 +340,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-7">
       <div className="animate-fade-up">
-        <h1 className="text-2xl font-semibold tracking-[-0.02em] text-slate-900">Dashboard</h1>
-        <p className="mt-1.5 text-sm text-slate-500">
+        <h1 className="text-2xl font-semibold tracking-[-0.02em] text-ink-900 dark:text-paper-50">Dashboard</h1>
+        <p className="mt-1.5 text-sm text-muted dark:text-ink-300">
           Extract structured fields from handwritten receipts, then benchmark every model against
           your own ground truth.
         </p>
@@ -362,7 +370,7 @@ export default function Dashboard() {
 
       <section className="card p-6 animate-fade-up" style={{ animationDelay: '120ms' }}>
         <h2 className="section-title mb-1">Upload receipts</h2>
-        <p className="mb-5 text-xs text-slate-500">
+        <p className="mb-5 text-xs text-muted dark:text-ink-300">
           Redact phone numbers, personal names and account numbers before uploading — these images
           are sent to third-party model APIs.
         </p>
@@ -370,14 +378,14 @@ export default function Dashboard() {
       </section>
 
       {error && (
-        <p className="flex items-start gap-2.5 rounded-card border border-rose-100 bg-rose-50 p-3.5 text-sm text-rose-700">
+        <p className="flex items-start gap-2.5 rounded-card border border-rose-100 bg-rose-50 p-3.5 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <span>{error}</span>
         </p>
       )}
 
       <section className="card p-6 animate-fade-up" style={{ animationDelay: '180ms' }}>
-        <div className="mb-5 border-b border-slate-100 pb-5">
+        <div className="mb-5 border-b border-paper-200 dark:border-ink-800 pb-5">
           <ModelSelector
             available={available}
             models={models}
@@ -388,7 +396,7 @@ export default function Dashboard() {
 
         <div className="mb-4 flex items-center justify-between gap-4">
           <h2 className="section-title">
-            Receipts <span className="tnum font-normal text-slate-400">({bills.length})</span>
+            Receipts <span className="tnum font-normal text-ink-300 dark:text-ink-400">({bills.length})</span>
           </h2>
         </div>
 
@@ -399,10 +407,10 @@ export default function Dashboard() {
             ))}
           </div>
         ) : !bills.length ? (
-          <div className="rounded-card border border-dashed border-slate-200 bg-slate-50/60 px-6 py-12 text-center">
-            <FileText size={24} className="mx-auto mb-3 text-slate-300" />
-            <p className="text-sm font-medium text-slate-600">No receipts yet</p>
-            <p className="mt-1 text-xs text-slate-500">Drop an image above to get started.</p>
+          <div className="rounded-card border border-dashed border-paper-300 dark:border-ink-700 bg-paper-100/70 dark:bg-ink-800/60 px-6 py-12 text-center">
+            <FileText size={24} className="mx-auto mb-3 text-ink-200 dark:text-ink-500" />
+            <p className="text-sm font-medium text-ink-600 dark:text-ink-200">No receipts yet</p>
+            <p className="mt-1 text-xs text-muted dark:text-ink-300">Drop an image above to get started.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -417,13 +425,13 @@ export default function Dashboard() {
                   <th className="pb-2.5 text-right font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-paper-200 dark:divide-ink-800">
                 {bills.map((bill) => (
-                  <tr key={bill.id} className="group transition-colors hover:bg-brand-50/40">
+                  <tr key={bill.id} className="group transition-colors hover:bg-teal-50/50 dark:hover:bg-teal-900/15">
                     <td className="py-3 pr-4">
                       <Link
                         to={`/bills/${bill.id}`}
-                        className="font-medium text-slate-800 transition-colors hover:text-brand-700"
+                        className="font-medium text-ink-800 dark:text-paper-100 transition-colors hover:text-teal-700 dark:hover:text-teal-300"
                       >
                         {bill.filename}
                       </Link>
@@ -431,17 +439,17 @@ export default function Dashboard() {
                     <td className="py-3 pr-4">
                       <StatusBadge status={bill.status} />
                     </td>
-                    <td className="tnum py-3 pr-4 text-slate-600">{bill.extraction_count}</td>
+                    <td className="tnum py-3 pr-4 text-ink-600 dark:text-ink-200">{bill.extraction_count}</td>
                     <td className="py-3 pr-4">
                       {bill.has_ground_truth ? (
                         <span className="badge-success">
                           <CheckCircle2 size={11} /> Set
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-400">Not set</span>
+                        <span className="text-xs text-ink-300 dark:text-ink-400">Not set</span>
                       )}
                     </td>
-                    <td className="py-3 pr-4 text-xs text-slate-500">
+                    <td className="py-3 pr-4 text-xs text-muted dark:text-ink-300">
                       {new Date(bill.uploaded_at).toLocaleString()}
                     </td>
                     <td className="py-3 text-right">

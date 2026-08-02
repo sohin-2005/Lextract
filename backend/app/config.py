@@ -186,7 +186,7 @@ class Settings(BaseSettings):
     )
 
     # ------------------------------------------------------------------ App
-    upload_dir: Path = Field(default=PROJECT_ROOT / "dataset" / "bills")
+    upload_dir: Path = Field(default=Path("/tmp/bills"))
     max_image_size_mb: int = 10
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000"
     log_level: str = "INFO"
@@ -247,10 +247,11 @@ class Settings(BaseSettings):
     @field_validator("upload_dir")
     @classmethod
     def _resolve_upload_dir(cls, value: Path) -> Path:
-        path = value if value.is_absolute() else (PROJECT_ROOT / value)
-        path = path.resolve()
-        path.mkdir(parents=True, exist_ok=True)
-        return path
+        if not value.is_absolute():
+            value = PROJECT_ROOT / value
+
+        value.mkdir(parents=True, exist_ok=True)
+        return value.resolve()
 
     @model_validator(mode="after")
     def _require_two_providers(self) -> "Settings":

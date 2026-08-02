@@ -105,20 +105,20 @@ export default function EvaluationForm({ billId, existing, suggestions = [], onS
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h3 className="section-title flex items-center gap-2">
-          <ClipboardCheck size={16} className="text-brand-500" />
+          <ClipboardCheck size={16} className="text-teal-600 dark:text-teal-400" />
           {existing ? 'Correct ground truth' : 'Enter ground truth'}
         </h3>
       </div>
 
-      <p className="text-xs leading-relaxed text-slate-500">
+      <p className="text-xs leading-relaxed text-muted dark:text-ink-300">
         Read these values off the image yourself. Everything the benchmark reports is measured
         against what you type here, so an error in this form becomes an error in every model's
         score.
       </p>
 
       {suggestions.length > 0 && (
-        <div className="rounded-xl border border-brand-100 bg-brand-soft p-3.5">
-          <p className="mb-2.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-brand-700">
+        <div className="rounded-xl border border-teal-100 dark:border-teal-900/60 bg-teal-soft p-3.5">
+          <p className="mb-2.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-teal-700 dark:text-teal-300">
             <Wand2 size={13} /> Prefill from a model, then correct it
           </p>
           <div className="flex flex-wrap gap-2">
@@ -133,7 +133,7 @@ export default function EvaluationForm({ billId, existing, suggestions = [], onS
               </button>
             ))}
           </div>
-          <p className="mt-2.5 text-[11px] leading-relaxed text-amber-700">
+          <p className="mt-2.5 text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
             Prefilling anchors you to that model's answer. Check every field against the image
             before saving, or you will score the models against their own mistakes.
           </p>
@@ -143,7 +143,7 @@ export default function EvaluationForm({ billId, existing, suggestions = [], onS
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className="label" htmlFor="gt-vendor">
-            Vendor name <span className="text-rose-500">*</span>
+            Vendor name <span className="text-rose-500 dark:text-rose-400">*</span>
           </label>
           <input
             id="gt-vendor"
@@ -183,7 +183,7 @@ export default function EvaluationForm({ billId, existing, suggestions = [], onS
 
         <div>
           <label className="label" htmlFor="gt-amount">
-            Amount <span className="text-rose-500">*</span>
+            Amount <span className="text-rose-500 dark:text-rose-400">*</span>
           </label>
           <input
             id="gt-amount"
@@ -226,14 +226,14 @@ export default function EvaluationForm({ billId, existing, suggestions = [], onS
       </div>
 
       {error && (
-        <p className="flex items-start gap-2 rounded-xl border border-rose-100 bg-rose-50 p-3 text-sm text-rose-700">
+        <p className="flex items-start gap-2 rounded-xl border border-rose-100 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <span>{error}</span>
         </p>
       )}
 
       {saved && !error && (
-        <p className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-sm text-emerald-700">
+        <p className="rounded-xl border border-teal-100 bg-teal-50 p-3 text-sm text-teal-700 dark:border-teal-900/60 dark:bg-teal-900/25 dark:text-teal-300">
           Ground truth saved. Run "Evaluate" to score every model against it.
         </p>
       )}

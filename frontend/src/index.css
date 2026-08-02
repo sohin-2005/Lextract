@@ -9,26 +9,26 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-paper-100 text-ink-900 antialiased transition-colors duration-200
+           dark:bg-ink-950 dark:text-paper-50;
     font-family: theme('fontFamily.sans');
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
   }
 
-  /* Numbers in tables and stats must not jitter as values change. */
+  /* Figures must not jitter as values change. */
   .tnum {
     font-variant-numeric: tabular-nums;
   }
 
   ::selection {
-    @apply bg-brand-100 text-brand-900;
+    @apply bg-teal-200 text-ink-900;
   }
 
   :focus-visible {
-    @apply outline-none ring-2 ring-brand-500/60 ring-offset-2 ring-offset-white;
+    @apply outline-none ring-2 ring-teal-500 ring-offset-2
+           ring-offset-paper-100 dark:ring-offset-ink-950;
   }
 
-  /* Respect the OS setting. The splash and ambience are decorative; nobody
-     should get motion sickness from a receipt tool. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -43,67 +43,65 @@
 @layer components {
   /* ---------------------------------------------------------------- surfaces */
 
-  /* Default surface. Slightly translucent over the page's soft ambience so the
-     background tint reads through — glass, but restrained enough to stay
-     legible on a projector. */
+  /* Light: white lifts off the warm paper ground. Dark: ink-900 lifts off the
+     deeper ink-950 page. Same relationship, inverted. */
   .card {
-    @apply rounded-card border border-slate-200/80 bg-white/85 shadow-card backdrop-blur-xl;
-  }
-
-  .card-flat {
-    @apply rounded-card border border-slate-200/80 bg-white shadow-card;
+    @apply rounded-card border border-paper-300/70 bg-white shadow-card
+           transition-colors duration-200
+           dark:border-ink-700 dark:bg-ink-900 dark:shadow-none;
   }
 
   .card-hover {
-    @apply transition-all duration-200 hover:border-brand-200 hover:shadow-lift;
+    @apply transition-all duration-200 hover:border-teal-300 hover:shadow-lift
+           dark:hover:border-teal-700;
   }
 
-  /* The one loud surface. Reserved for a single primary metric per screen —
-     used more than once it stops signalling anything. */
-  .card-brand {
-    @apply relative overflow-hidden rounded-card bg-brand-deep text-white shadow-brand;
+  /* The single loud surface per screen. Teal field with ink text — 5.6:1, and
+     both colours come straight from the mark. */
+  .card-accent {
+    @apply relative overflow-hidden rounded-card bg-teal-gradient text-ink-900 shadow-accent;
   }
 
-  .card-brand::after {
+  .card-accent::after {
     content: '';
     @apply pointer-events-none absolute inset-0;
-    background:
-      radial-gradient(120% 90% at 100% 0%, rgba(255, 255, 255, 0.28), transparent 60%),
-      radial-gradient(80% 60% at 0% 100%, rgba(255, 255, 255, 0.12), transparent 55%);
+    background: radial-gradient(120% 90% at 100% 0%, rgba(255, 255, 255, 0.26), transparent 62%);
   }
 
   .card-tint {
-    @apply rounded-card border border-brand-100 bg-brand-soft;
-  }
-
-  .panel {
-    @apply rounded-panel border border-slate-200/80 bg-white/85 shadow-card backdrop-blur-xl;
+    @apply rounded-card border border-teal-100 bg-teal-soft
+           dark:border-teal-900/60 dark:bg-teal-900/20;
   }
 
   /* ----------------------------------------------------------------- buttons */
 
   .btn {
     @apply inline-flex select-none items-center justify-center gap-2 rounded-xl px-4 py-2.5
-           text-sm font-medium leading-none transition-all duration-150
+           text-sm font-semibold leading-none transition-all duration-150
            disabled:pointer-events-none disabled:opacity-45;
   }
 
   .btn-primary {
-    @apply btn bg-brand-deep text-white shadow-brand
-           hover:brightness-[1.10] active:scale-[0.985];
+    @apply btn bg-teal-500 text-ink-900 shadow-accent
+           hover:bg-teal-400 active:scale-[0.985]
+           dark:bg-teal-500 dark:text-ink-900 dark:hover:bg-teal-400;
   }
 
   .btn-secondary {
-    @apply btn border border-slate-200 bg-white text-slate-700 shadow-sm
-           hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 active:scale-[0.985];
+    @apply btn border border-paper-300 bg-white font-medium text-ink-700
+           hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 active:scale-[0.985]
+           dark:border-ink-700 dark:bg-ink-800 dark:text-paper-200
+           dark:hover:border-teal-700 dark:hover:bg-ink-700 dark:hover:text-teal-300;
   }
 
   .btn-ghost {
-    @apply btn text-slate-500 hover:bg-slate-100 hover:text-slate-900;
+    @apply btn font-medium text-muted hover:bg-paper-200 hover:text-ink-900
+           dark:text-ink-300 dark:hover:bg-ink-800 dark:hover:text-paper-50;
   }
 
   .btn-danger-ghost {
-    @apply btn text-slate-400 hover:bg-rose-50 hover:text-rose-600;
+    @apply btn font-medium text-ink-300 hover:bg-rose-50 hover:text-rose-600
+           dark:text-ink-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-400;
   }
 
   .btn-sm {
@@ -113,96 +111,102 @@
   /* ------------------------------------------------------------------ inputs */
 
   .input {
-    @apply w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm
-           text-slate-900 placeholder:text-slate-400
-           transition-colors focus:border-brand-400 focus:outline-none
-           focus:ring-4 focus:ring-brand-500/10;
+    @apply w-full rounded-xl border border-paper-300 bg-white px-3.5 py-2.5 text-sm
+           text-ink-900 placeholder:text-ink-300 transition-colors
+           focus:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/15
+           dark:border-ink-700 dark:bg-ink-800 dark:text-paper-50
+           dark:placeholder:text-ink-400 dark:focus:border-teal-500;
   }
 
   .label {
-    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500;
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em]
+           text-muted dark:text-ink-300;
   }
 
   /* ------------------------------------------------------------------ badges */
 
   .badge {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1
-           text-[11px] font-medium leading-none;
+           text-[11px] font-semibold leading-none;
   }
 
-  .badge-brand {
-    @apply badge bg-brand-50 text-brand-700;
+  .badge-accent {
+    @apply badge bg-teal-50 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300;
   }
 
   .badge-neutral {
-    @apply badge bg-slate-100 text-slate-600;
+    @apply badge bg-paper-200 text-ink-600 dark:bg-ink-800 dark:text-ink-200;
   }
 
   .badge-success {
-    @apply badge bg-emerald-50 text-emerald-700;
+    @apply badge bg-teal-50 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300;
   }
 
   .badge-warning {
-    @apply badge bg-amber-50 text-amber-700;
+    @apply badge bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300;
   }
 
   .badge-danger {
-    @apply badge bg-rose-50 text-rose-700;
+    @apply badge bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300;
   }
 
   /* --------------------------------------------------------------- structure */
 
   .section-title {
-    @apply text-[15px] font-semibold tracking-[-0.01em] text-slate-900;
+    @apply text-[15px] font-semibold tracking-[-0.01em] text-ink-900 dark:text-paper-50;
   }
 
   .eyebrow {
-    @apply text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-500;
+    @apply text-[11px] font-semibold uppercase tracking-[0.09em] text-muted dark:text-ink-300;
   }
 
   .table-head {
-    @apply border-b border-slate-200 text-left text-[11px] font-semibold
-           uppercase tracking-[0.07em] text-slate-500;
+    @apply border-b border-paper-300 text-left text-[11px] font-semibold
+           uppercase tracking-[0.07em] text-muted
+           dark:border-ink-700 dark:text-ink-300;
   }
 
   .divider {
-    @apply h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent;
+    @apply h-px w-full bg-gradient-to-r from-transparent via-paper-300 to-transparent
+           dark:via-ink-700;
   }
 
-  /* Thin gradient meter used for accuracy bars. */
   .meter {
-    @apply h-1.5 w-full overflow-hidden rounded-full bg-slate-100;
+    @apply h-1.5 w-full overflow-hidden rounded-full bg-paper-200 dark:bg-ink-700;
   }
 
   .meter-fill {
-    @apply h-full rounded-full bg-brand-gradient transition-[width] duration-700 ease-out;
+    @apply h-full rounded-full bg-teal-gradient transition-[width] duration-700 ease-out;
   }
 
   .skeleton {
-    @apply relative overflow-hidden rounded-lg bg-slate-100;
+    @apply relative overflow-hidden rounded-lg bg-paper-200 dark:bg-ink-800;
   }
 
   .skeleton::after {
     content: '';
     @apply absolute inset-0 -translate-x-full animate-shimmer;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
   }
 }
 
 @layer utilities {
-  /* Ambient page wash. Two very soft brand blooms on a near-white field —
-     enough to keep the glass surfaces from looking grey, not enough to make
-     the page "a blue page". */
+  /* Ambient wash. Warm paper with two faint teal blooms in light mode; the
+     same geometry over ink in dark. Enough to keep surfaces from looking flat,
+     never enough to make the page "a teal page". */
   .page-ambience {
-    background-color: #f8fafc;
+    background-color: #f2f0e9;
     background-image:
-      radial-gradient(58rem 30rem at 12% -6%, rgba(4, 161, 229, 0.10), transparent 62%),
-      radial-gradient(46rem 26rem at 96% 2%, rgba(8, 180, 236, 0.09), transparent 58%);
+      radial-gradient(58rem 30rem at 12% -6%, rgba(14, 164, 126, 0.09), transparent 62%),
+      radial-gradient(46rem 26rem at 96% 2%, rgba(14, 164, 126, 0.06), transparent 58%);
     background-attachment: fixed;
   }
 
-  .text-gradient {
-    @apply bg-brand-gradient bg-clip-text text-transparent;
+  .dark .page-ambience {
+    background-color: #0f1215;
+    background-image:
+      radial-gradient(58rem 30rem at 12% -6%, rgba(14, 164, 126, 0.13), transparent 62%),
+      radial-gradient(46rem 26rem at 96% 2%, rgba(14, 164, 126, 0.08), transparent 58%);
   }
 
   .sr-only-focusable:not(:focus):not(:focus-within) {

@@ -90,15 +90,15 @@ export default function BillUploader({ onUploaded }) {
           px-6 py-12 text-center transition-all duration-200
           ${
             dragging
-              ? 'border-brand-400 bg-brand-50 shadow-[0_0_0_4px_rgba(4,161,229,0.08)]'
-              : 'border-slate-300 bg-slate-50/50 hover:border-brand-300 hover:bg-brand-50/40'
+              ? 'border-teal-400 bg-teal-50 dark:bg-teal-900/25 shadow-[0_0_0_4px_rgba(4,161,229,0.08)]'
+              : 'border-paper-400 dark:border-ink-600 bg-paper-100/60 dark:bg-ink-800/50 hover:border-teal-300 dark:hover:border-teal-700 hover:bg-teal-50/50 dark:hover:bg-teal-900/15'
           }
           ${busy ? 'pointer-events-none opacity-60' : ''}`}
       >
         {busy ? (
           <>
-            <Loader2 size={26} className="mb-3 animate-spin text-brand-500" />
-            <p className="text-sm font-medium text-slate-700">
+            <Loader2 size={26} className="mb-3 animate-spin text-teal-600 dark:text-teal-400" />
+            <p className="text-sm font-medium text-ink-700 dark:text-paper-200">
               Uploading {progress.done} of {progress.total}…
             </p>
             <span className="meter mt-3 w-40">
@@ -110,13 +110,13 @@ export default function BillUploader({ onUploaded }) {
           </>
         ) : (
           <>
-            <span className="mb-3.5 flex h-11 w-11 items-center justify-center rounded-xl bg-brand-gradient shadow-brand">
+            <span className="mb-3.5 flex h-11 w-11 items-center justify-center rounded-xl bg-teal-gradient shadow-accent">
               <UploadCloud size={20} className="text-white" />
             </span>
-            <p className="text-sm font-medium text-slate-700">
-              Drop receipt photos here, or <span className="text-brand-700">browse</span>
+            <p className="text-sm font-medium text-ink-700 dark:text-paper-200">
+              Drop receipt photos here, or <span className="text-teal-700 dark:text-teal-300">browse</span>
             </p>
-            <p className="mt-1.5 text-xs text-slate-500">
+            <p className="mt-1.5 text-xs text-muted dark:text-ink-300">
               JPEG, PNG or WebP · up to 10 MB · multiple files supported
             </p>
           </>

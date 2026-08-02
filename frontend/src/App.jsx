@@ -4,35 +4,10 @@ import { Activity, AlertTriangle, CheckCircle2, ExternalLink, LayoutGrid } from 
 import Dashboard from './pages/Dashboard.jsx'
 import BillDetail from './pages/BillDetail.jsx'
 import SplashScreen from './components/SplashScreen.jsx'
+import Logo from './components/Logo.jsx'
+import ThemeToggle from './components/ThemeToggle.jsx'
+import useTheme from './hooks/useTheme.js'
 import { getHealth } from './services/api.js'
-
-/** Wordmark. Orbitron is used here and nowhere else. */
-function Logo({ compact = false }) {
-  return (
-    <span className="flex items-center gap-2.5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-gradient shadow-brand">
-        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="white" strokeWidth="1.9">
-          <path d="M5 3.5h9.5L19 8v12.5H5z" strokeLinejoin="round" />
-          <path d="M14 3.5V8h5" strokeLinejoin="round" />
-          <path d="M8.4 12.4h7.2M8.4 15.8h4.6" strokeLinecap="round" />
-        </svg>
-      </span>
-      <span className="leading-none">
-        <span
-          className="block font-display text-[15px] font-bold text-slate-900"
-          style={{ letterSpacing: '0.11em' }}
-        >
-          Lextract
-        </span>
-        {!compact && (
-          <span className="mt-1 block text-[11px] font-medium text-slate-400">
-            Receipt extraction &amp; model benchmarking
-          </span>
-        )}
-      </span>
-    </span>
-  )
-}
 
 /**
  * Landing page for the Zoho OAuth redirect.
@@ -50,21 +25,21 @@ function ZohoCallback() {
   return (
     <div className="mx-auto max-w-2xl px-6 py-14">
       <div className="card p-8">
-        <h1 className="mb-1 text-xl font-semibold tracking-[-0.01em]">Zoho authorisation</h1>
-        <p className="mb-6 text-sm text-slate-500">Step 2 of 2 — exchange the code for a token.</p>
+        <h1 className="mb-1 text-xl font-bold tracking-[-0.02em]">Zoho authorisation</h1>
+        <p className="mb-6 text-sm text-muted dark:text-ink-300">Step 2 of 2 — exchange the code for a token.</p>
 
         {error && (
-          <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">
+          <p className="rounded-xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
             Zoho returned an error: <code className="font-mono">{error}</code>
           </p>
         )}
 
         {code && (
           <>
-            <p className="mb-3 text-sm text-slate-600">
+            <p className="mb-3 text-sm text-ink-600 dark:text-ink-200">
               Authorisation code received. It expires in about 60 seconds — exchange it now.
             </p>
-            <code className="mb-5 block break-all rounded-xl border border-slate-200 bg-slate-50 p-3.5 font-mono text-xs text-slate-700">
+            <code className="mb-5 block break-all rounded-xl border border-paper-300 bg-paper-100 p-3.5 font-mono text-xs text-ink-700 dark:border-ink-700 dark:bg-ink-800 dark:text-paper-200">
               {code}
             </code>
             <a
@@ -75,23 +50,23 @@ function ZohoCallback() {
             >
               Exchange for refresh token <ExternalLink size={15} />
             </a>
-            <p className="mt-5 text-sm leading-relaxed text-slate-500">
-              Copy <code className="font-mono text-slate-700">refresh_token</code> from the response
-              into <code className="font-mono text-slate-700">backend/.env</code> as{' '}
-              <code className="font-mono text-slate-700">ZOHO_REFRESH_TOKEN</code>, then restart the
+            <p className="mt-5 text-sm leading-relaxed text-muted dark:text-ink-300">
+              Copy <code className="font-mono text-ink-900 dark:text-paper-100">refresh_token</code> from the response
+              into <code className="font-mono text-ink-900 dark:text-paper-100">backend/.env</code> as{' '}
+              <code className="font-mono text-ink-900 dark:text-paper-100">ZOHO_REFRESH_TOKEN</code>, then restart the
               backend.
             </p>
           </>
         )}
 
         {!code && !error && (
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-ink-600 dark:text-ink-200">
             No <code className="font-mono">code</code> parameter present. Start the flow with{' '}
-            <code className="font-mono text-slate-700">python scripts/get_refresh_token.py</code>.
+            <code className="font-mono text-ink-900 dark:text-paper-100">python scripts/get_refresh_token.py</code>.
           </p>
         )}
 
-        <Link to="/" className="mt-7 inline-block text-sm font-medium text-brand-700 hover:underline">
+        <Link to="/" className="mt-7 inline-block text-sm font-semibold text-teal-700 hover:underline dark:text-teal-300">
           &larr; Back to dashboard
         </Link>
       </div>
@@ -136,7 +111,7 @@ function HealthPill() {
         {healthy ? 'Connected' : 'DB unavailable'}
       </span>
       <span
-        className="badge-brand"
+        className="badge-accent"
         title={`Models configured: ${health.configured_providers.join(', ') || 'none'}`}
       >
         <Activity size={12} />
@@ -150,6 +125,7 @@ function HealthPill() {
 export default function App() {
   const { pathname } = useLocation()
   const [showSplash, setShowSplash] = useState(true)
+  const { theme, toggle } = useTheme()
 
   return (
     <div className="page-ambience min-h-screen">
@@ -157,15 +133,19 @@ export default function App() {
 
       <a
         href="#main"
-        className="sr-only-focusable fixed left-4 top-4 z-40 rounded-lg bg-white px-4 py-2 text-sm font-medium shadow-lift"
+        className="sr-only-focusable fixed left-4 top-4 z-40 rounded-lg bg-white px-4 py-2 text-sm
+                   font-semibold shadow-lift dark:bg-ink-800 dark:text-paper-50"
       >
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl">
+      <header
+        className="sticky top-0 z-30 border-b border-paper-300/70 bg-paper-100/80 backdrop-blur-xl
+                   transition-colors dark:border-ink-800 dark:bg-ink-950/80"
+      >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3.5">
-          <Link to="/" aria-label="Lextract home">
-            <Logo />
+          <Link to="/" aria-label="Lextract home" className="rounded-lg">
+            <Logo tagline />
           </Link>
 
           <div className="flex items-center gap-3">
@@ -175,15 +155,17 @@ export default function App() {
               </Link>
             )}
             <a
-              className="hidden text-sm font-medium text-slate-500 transition-colors hover:text-brand-700 sm:block"
+              className="hidden text-sm font-medium text-muted transition-colors
+                         hover:text-teal-700 dark:text-ink-300 dark:hover:text-teal-300 sm:block"
               href="/docs"
               target="_blank"
               rel="noreferrer"
             >
               API
             </a>
-            <span className="hidden h-5 w-px bg-slate-200 sm:block" />
+            <span className="hidden h-5 w-px bg-paper-300 dark:bg-ink-700 sm:block" />
             <HealthPill />
+            <ThemeToggle theme={theme} onToggle={toggle} />
           </div>
         </div>
       </header>
@@ -199,8 +181,8 @@ export default function App() {
 
       <footer className="mx-auto max-w-7xl px-6 pb-10 pt-4">
         <div className="divider mb-5" />
-        <p className="text-center text-xs text-slate-400">
-          <span className="font-display font-semibold tracking-[0.08em] text-slate-500">
+        <p className="text-center text-xs text-muted dark:text-ink-400">
+          <span className="font-display font-bold tracking-[-0.02em] text-ink-700 dark:text-paper-200">
             Lextract
           </span>{' '}
           — costs are estimates from published per-token rates
