@@ -5,5 +5,8 @@ venv/
 .env
 .pytest_cache/
 .mypy_cache/
-dataset/bills/*
-!dataset/bills/.gitkeep
+.ruff_cache/
+tests/
+# Receipt images are part of the repo but not of the image — they are user
+# data, and baking 15 MB of them into every build slows deploys for nothing.
+../dataset/bills/*

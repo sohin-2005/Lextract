@@ -6,8 +6,23 @@ Lextract is an AI-powered platform that extracts structured information from
 handwritten receipts using multiple vision language models and benchmarks their
 performance.
 
+### → **[lextract-bay.vercel.app](https://lextract-bay.vercel.app)**
+
+![Lextract dashboard](assets/dashboard-light.png)
+
+> Hosted on free tiers. The API sleeps after ~15 minutes idle, so the first
+> request can take 30–60 seconds to wake it — the dashboard will show
+> "API offline" until it does. Reload once and it connects.
+>
+> | | |
+> |---|---|
+> | Frontend | https://lextract-bay.vercel.app |
+> | API | https://lextract-7gvy.onrender.com |
+> | API docs | https://lextract-7gvy.onrender.com/docs |
+> | Health | https://lextract-7gvy.onrender.com/api/health |
+
 Extract structured accounting data from photographs of **handwritten Indian
-bills** using three vision LLMs, score every model against human ground truth
+bills** using several vision LLMs, score every model against human ground truth
 field by field, and push the result you trust into Zoho Books.
 
 The interesting part is not the extraction — it is the **evaluation harness**.
@@ -20,12 +35,15 @@ how badly does it fail when it fails.
 ## Contents
 
 - [What it does](#what-it-does)
+- [Screenshots](#screenshots)
 - [Architecture](#architecture)
 - [Tech stack](#tech-stack)
 - [Accounts you need](#accounts-you-need--what-is-actually-free)
 - [Quick start](#quick-start)
+- [Deploying](#deploying)
 - [Usage flow](#usage-flow)
 - [API reference](#api-reference)
+- [Choosing which models to run](#choosing-which-models-to-run)
 - [Evaluation methodology](#evaluation-methodology)
 - [Results template](#results-template)
 - [Testing](#testing)
@@ -38,13 +56,37 @@ how badly does it fail when it fails.
 
 1. **Upload** a photo of a handwritten bill (drag-and-drop, or the API).
 2. **Extract** six fields — vendor name, bill number, date, amount, currency,
-   tax/GST — with up to six vision models concurrently: Gemini, Claude, GPT,
-   Groq, SambaNova and Mistral.
+   tax/GST — running the enabled models concurrently. Eight providers are
+   implemented; which ones appear is one line of config.
 3. **Record ground truth** by reading the bill yourself.
 4. **Score** each model per field with partial credit for near-misses, because
    `Sharma Genral Store` is not the same kind of wrong as `Verma Medicals`.
 5. **Compare** accuracy, latency and cost per 100 bills on one leaderboard.
 6. **Sync** the extraction you trust to Zoho Books as an expense.
+
+---
+
+## Screenshots
+
+**Dashboard** — headline metrics, model picker, receipt list, leaderboard.
+
+![Dashboard, light mode](assets/dashboard-light.png)
+
+**Dark mode** — the theme follows your OS by default, with a manual override
+in the header.
+
+![Dashboard, dark mode](assets/dashboard-dark.png)
+
+**Bill detail** — the comparison grid. Rows are fields, columns are models;
+reading *across* a row shows which fields are hard for every model, which is
+the more actionable question.
+
+![Bill detail with model comparison](assets/bill-detail.png)
+
+**Disagreements** — where models differ, at least one is wrong. Those fields
+are flagged before any ground truth exists, so they are the first place to look.
+
+![Model disagreement panel](assets/disagreements.png)
 
 ---
 
@@ -78,7 +120,10 @@ how badly does it fail when it fails.
 │                         ├── OpenAIClient ──► OpenAI                   │
 │                         ├── GroqClient ────► Groq                     │
 │                         ├── SambaNovaClient ► SambaNova               │
-│                         └── MistralClient ─► Mistral                  │
+│                         ├── MistralClient ─► Mistral                  │
+│                         ├── NvidiaClient ──► NVIDIA NIM               │
+│                         ├── MoonshotClient ► Moonshot / Kimi          │
+│                         └── OpenRouterClient ► OpenRouter (any lab)   │
 │    extractors.py    concurrent orchestration · type coercion          │
 │    evaluator.py     ★ scoring rubric (pure, no I/O, unit-tested)      │
 │    zoho_service.py  OAuth2 · token cache · Books v3 ──► Zoho Books    │
@@ -130,10 +175,26 @@ subclass with two class attributes.
 | Images | Pillow | ≥ 10.4 |
 | Frontend | React | 18.3 |
 | Build | Vite | 6 |
-| Styling | Tailwind CSS | 3.4 |
+| Styling | Tailwind CSS (class-based dark mode) | 3.4 |
 | HTTP | Axios | 1.7 |
 | Charts | Recharts | 2.15 |
 | Icons | lucide-react | 0.469 |
+| Type | Inter + JetBrains Mono | Google Fonts |
+
+### Design system
+
+Built from the logo, not chosen separately:
+
+| Role | Hex | Use |
+|---|---|---|
+| Ink | `#14181C` | Wordmark, mark, body text |
+| Accent | `#0EA47E` | Scores, CTAs, active state, meters |
+| Paper | `#F2F0E9` | App surface, icon tile |
+| Muted | `#6A6E72` | Tagline, secondary labels |
+
+Light mode is ink on paper; dark mode inverts to paper on ink, matching the two
+logo variants. Every foreground/background pair clears WCAG AA in both modes —
+CTAs are ink on teal (5.63:1) rather than white on teal (3.17:1, which fails).
 
 ---
 
@@ -458,6 +519,97 @@ point at the `db` service, so the value in your `.env` only affects native runs.
 
 ---
 
+## Deploying
+
+The live instance runs the frontend on Vercel and the API on Render:
+**https://lextract-bay.vercel.app** → **https://lextract-7gvy.onrender.com**.
+
+
+The Vite dev proxy is a **dev-server feature**. It does not exist in a built
+bundle, so a deployed frontend must be told where the backend lives.
+
+### Frontend (Vercel)
+
+| Setting | Value |
+|---|---|
+| Environment variable | `VITE_API_BASE_URL` = `https://<your-backend>.onrender.com` |
+| Build command | `npm run build` |
+| Output directory | `dist` |
+| Root directory | `frontend` |
+
+No trailing slash, no `/api` suffix. **Vite inlines this at build time**, so
+changing it requires a redeploy — restarting is not enough.
+
+`frontend/vercel.json` supplies the SPA fallback rewrite. Without it, opening
+`/bills/<uuid>` directly or refreshing on it returns 404, because Vercel looks
+for a file at that path.
+
+### Backend (Railway)
+
+**Set Root Directory to `backend`.** This is the one that catches people: the
+repo root has no `requirements.txt`, no `Dockerfile` and no `package.json`, so
+a builder pointed at the root cannot work out how to build anything and fails
+in about two seconds with "Failed to build an image".
+
+With the root directory set, `backend/railway.json` takes over: it pins the
+Dockerfile builder and points the health check at `/api/health`. No start
+command needed — the Dockerfile runs migrations then starts uvicorn on `$PORT`.
+
+Add a PostgreSQL service, then set the variables below. Railway exposes its
+database as `DATABASE_URL` in `postgresql://` form; the app rewrites it to
+`postgresql+asyncpg://` automatically, so you can reference it directly:
+
+```
+DATABASE_URL      = ${{Postgres.DATABASE_URL}}
+CORS_ORIGINS      = https://<your-app>.vercel.app
+ENABLED_PROVIDERS = gemini,groq,nvidia
+GOOGLE_API_KEY    = …
+GROQ_API_KEY      = …
+NVIDIA_API_KEY    = …
+```
+
+Do **not** set `PORT` yourself — Railway injects it.
+
+### Backend (Render)
+
+| Variable | Value |
+|---|---|
+| `CORS_ORIGINS` | `https://<your-app>.vercel.app` |
+| `DATABASE_URL` | your managed Postgres URL |
+| `UPLOAD_DIR` | a path on a **persistent disk** — see below |
+| provider keys | `GOOGLE_API_KEY`, `GROQ_API_KEY`, … |
+| `ENABLED_PROVIDERS` | e.g. `gemini,groq,nvidia` |
+
+Start command:
+
+```
+alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+Three things that bite on free tiers:
+
+1. **CORS.** The default only allows `localhost`. Until `CORS_ORIGINS` names
+   your Vercel origin, the browser blocks every response even though the
+   backend answered fine.
+2. **Cold starts.** Render free instances spin down after ~15 minutes idle;
+   the next request takes 30–60 seconds. The frontend's timeout is generous
+   enough to survive it, but the first load will feel broken.
+3. **Ephemeral disk.** Render's free filesystem is wiped on every deploy and
+   restart. With `UPLOAD_DIR` on it, uploaded receipts vanish while their
+   database rows remain, and the image endpoint starts returning
+   `410 Gone`. Attach a persistent disk and point `UPLOAD_DIR` at it, or treat
+   the deployment as a demo and keep the real dataset local.
+
+### Verifying
+
+```bash
+curl https://<your-backend>.onrender.com/api/health
+```
+
+Should return `configured_providers` and `database: connected`. If that works
+but the site still fails, the problem is `VITE_API_BASE_URL` or `CORS_ORIGINS`,
+not the backend.
+
 ## Usage flow
 
 1. **Collect and redact 10–15 bills** — see [`dataset/README.md`](dataset/README.md).
@@ -611,15 +763,14 @@ every number).
 - Which model would you pick, and under which of the conditions in
   [METHODOLOGY §6](docs/METHODOLOGY.md#6-recommendation-framework)?
 
-### Screenshots
+### Before submitting
 
-Capture these for your submission and drop them in `docs/images/`:
-
-1. Dashboard with several bills and the leaderboard chart populated
-2. Bill detail showing the comparison grid with colour-coded score badges
-3. The model-disagreement panel with at least one real disagreement
-
----
+- [ ] `assets/*.png` replaced with real captures (see `assets/README.md`)
+- [ ] `dataset/ground_truth.json` holds your answer keys, not the templates
+- [ ] Every receipt in `dataset/bills/` is redacted — git history is permanent
+- [ ] The results table above is filled in from `GET /api/evaluation/report`
+- [ ] `VITE_API_BASE_URL` set on Vercel, `CORS_ORIGINS` set on Render
+- [ ] `backend/.env` is **not** committed (`git ls-files | grep .env` → only `.env.example`)
 
 ## Testing
 
@@ -629,69 +780,68 @@ source venv/bin/activate
 pytest -v
 ```
 
-83 tests across two suites:
+162 tests across four suites, all hermetic — no database, no network, no API
+keys. `tests/conftest.py` sets `TAXOR_DISABLE_DOTENV=1`, so the suite can never
+read your real `.env` or make a billable call.
 
-- **`test_evaluator.py`** (65) — the scoring framework: exact/fuzzy/partial
-  boundaries, date format equivalence and day-first parsing, amount tolerance
-  edges, currency decoration stripping, null and hallucination handling, GSTIN
-  identity matching, and aggregation.
-- **`test_llm_clients.py`** (18) — the OpenAI-compatible client family, driven
-  against a local fake provider. Asserts the exact bytes on the wire (endpoint
-  path, auth header, per-provider token-parameter name, base64 image encoding),
-  the degrade-and-retry path, cost estimation with env overrides, and JSON
-  repair of fenced/trailing-comma responses.
-- **`test_zoho_service.py`** (12) — the OAuth paths against a fake Zoho: Self
-  Client vs. server-based redirect handling, `access_type`/`prompt` on the
-  consent URL, access-token caching, and organisation discovery.
+| Suite | Tests | Covers |
+|---|---|---|
+| `test_evaluator.py` | 69 | Exact/fuzzy/partial boundaries, day-first date parsing, amount tolerance, null vs. hallucination, GSTIN identity matching, aggregation, re-run deduplication |
+| `test_llm_clients.py` | 69 | Per-provider wire format, JSON repair (extra braces, fences, prose, truncation), the one-shot retry, reasoning-model handling, cost estimation, the provider allowlist, 401 diagnostics |
+| `test_zoho_service.py` | 12 | Self Client vs. server-based OAuth, token caching, organisation discovery |
+| `conftest.py` | — | Test isolation |
 
-`tests/conftest.py` sets `TAXOR_DISABLE_DOTENV=1`, so the suite never reads your
-real `.env` — no test can pick up live credentials and make a billable call.
-Everything runs with **no database, no network and no API keys**: clone and
-`pytest` finishes in about two seconds.
+Clone and run — it finishes in about twelve seconds:
 
----
+```bash
+cd backend && source venv/bin/activate && pytest
+```
 
 ## Project structure
 
 ```
 lextract/
+├── assets/                       README screenshots
 ├── backend/
 │   ├── app/
-│   │   ├── main.py              FastAPI factory, CORS, exception handlers
-│   │   ├── config.py            Pydantic Settings, ≥2-provider validation
-│   │   ├── database.py          Async engine, session factory, Base
-│   │   ├── models.py            5 ORM models, UUID PKs
-│   │   ├── schemas.py           Request/response contracts
-│   │   ├── dependencies.py      DB session + settings injection
-│   │   ├── routers/             bills · extraction · evaluation · zoho
-│   │   ├── services/            llm_clients (6 providers) · extractors ·
-│   │   │                        evaluator · zoho_service
-│   │   └── utils/               image_proc · constants
-│   ├── alembic/versions/        0001_initial_schema.py
-│   ├── scripts/                 get_refresh_token.py · list_models.py
-│   ├── tests/                   conftest.py · test_evaluator.py ·
-│   │                            test_llm_clients.py · test_zoho_service.py
-│   ├── requirements.txt · .env.example · Dockerfile · pytest.ini
+│   │   ├── main.py               FastAPI factory, CORS, exception handlers
+│   │   ├── config.py             Settings, provider allowlist, ≥2-provider check
+│   │   ├── database.py           Async engine, session factory, Base
+│   │   ├── models.py             5 ORM models, UUID PKs
+│   │   ├── schemas.py            Request/response contracts
+│   │   ├── dependencies.py       DB session + settings injection
+│   │   ├── routers/              bills · extraction · evaluation · zoho
+│   │   ├── services/
+│   │   │   ├── llm_clients.py    8 providers + JSON repair + retry
+│   │   │   ├── extractors.py     Concurrent orchestration, type coercion
+│   │   │   ├── evaluator.py      ★ scoring rubric (pure, no I/O)
+│   │   │   └── zoho_service.py   OAuth2, token cache, Books v3
+│   │   └── utils/                image_proc · constants (prompt, pricing)
+│   ├── alembic/versions/         0001_initial_schema.py
+│   ├── scripts/                  get_refresh_token.py · list_models.py
+│   ├── tests/                    conftest · evaluator · llm_clients · zoho
+│   └── requirements.txt · .env.example · Dockerfile · pytest.ini
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx              Routing, health pill, Zoho callback page
-│   │   ├── pages/               Dashboard · BillDetail
-│   │   ├── components/          BillUploader · ModelComparison ·
-│   │   │                        ExtractionResults · EvaluationForm ·
-│   │   │                        ZohoExpenseCreator
-│   │   ├── services/api.js      Axios instance + every call
-│   │   └── constants.js         Provider list shared by both pages
-│   ├── package.json · vite.config.js · tailwind.config.js
+│   │   ├── App.jsx               Routing, header, splash gate, theme
+│   │   ├── hooks/useTheme.js     Light/dark, persisted, OS-aware
+│   │   ├── pages/                Dashboard · BillDetail
+│   │   ├── components/           Logo · SplashScreen · ThemeToggle ·
+│   │   │                         BillUploader · ModelSelector ·
+│   │   │                         ModelComparison · ExtractionResults ·
+│   │   │                         EvaluationForm · ZohoExpenseCreator
+│   │   ├── services/api.js       Axios instance + every call
+│   │   └── constants.js          Provider metadata
+│   ├── vercel.json               SPA fallback rewrite
+│   └── package.json · vite.config.js · tailwind.config.js
 ├── dataset/
-│   ├── bills/                   your images (git-ignored)
-│   ├── ground_truth.json        answer-key template
-│   └── README.md                collection + redaction guide
+│   ├── bills/                    receipt images (committed)
+│   ├── ground_truth.json         answer key
+│   └── README.md                 collection + redaction guide
 ├── docs/METHODOLOGY.md
-├── .gitignore
+├── docker-compose.yml
 └── README.md
 ```
-
----
 
 ## Troubleshooting
 

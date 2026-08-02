@@ -47,19 +47,26 @@ pnpm-debug.log*
 # ---------------------------------------------------------------------------
 # Dataset
 #
-# Bill images stay OUT of git. They are photographs of real receipts and may
-# carry residual PII even after redaction, and they are sent to third-party
-# LLM APIs. ground_truth.json IS committed -- it is the answer key, and holds
-# only the fields we deliberately chose to record.
+# Receipt images ARE committed: the benchmark is not reproducible without the
+# inputs it was measured on, and the submission requires them.
+#
+# THIS MAKES REDACTION NON-OPTIONAL. Git history is permanent -- deleting an
+# image in a later commit does not remove it from the repository. Before the
+# first push, confirm every image has phone numbers, personal names, account
+# numbers and Aadhaar/PAN covered. See dataset/README.md.
+#
+# Note there is deliberately no blanket *.jpg / *.png rule here. A global
+# image ignore is the usual reason a dataset silently fails to upload, and it
+# would also swallow the screenshots in docs/images/.
 # ---------------------------------------------------------------------------
-dataset/bills/*
-!dataset/bills/.gitkeep
-*.jpg
-*.jpeg
-*.png
-*.webp
-*.heic
-!docs/images/*.png
+
+# Legacy upload location. UPLOAD_DIR used to point here; images belong in
+# dataset/bills/. Use backend/scripts/relocate_uploads.py to consolidate.
+tmp/
+.DS_Store
+
+# Nothing under dataset/ is ignored. The images and the answer key are both
+# part of the deliverable — the benchmark is not reproducible without them.
 
 # ---------------------------------------------------------------------------
 # Editors & OS

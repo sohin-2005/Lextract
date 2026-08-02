@@ -10,10 +10,40 @@ import axios from 'axios'
 /**
  * Base URL for the API.
  *
- * Empty by default so requests go to the same origin and Vite's dev proxy
- * forwards /api to :8000. Set VITE_API_BASE_URL to point at a remote backend.
+ * Empty in development, where Vite's dev proxy forwards /api to :8000 and
+ * requests are same-origin. In a production build there is no proxy — the
+ * proxy is a dev-server feature — so VITE_API_BASE_URL must be set or every
+ * request lands on the frontend's own origin and 404s.
+ *
+ * A trailing slash or an accidental `/api` suffix would produce `//api` or
+ * `/api/api`, so both are trimmed rather than left to fail confusingly.
  */
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+function resolveBaseUrl() {
+  const raw = (import.meta.env.VITE_API_BASE_URL || '').trim()
+  if (!raw) return ''
+  return raw.replace(/\/+$/, '').replace(/\/api$/, '')
+}
+
+export const API_BASE_URL = resolveBaseUrl()
+
+/**
+ * True when the app was built for production but has no backend URL.
+ *
+ * This is the single most common deployment mistake with this stack, and its
+ * symptom — "failed to fetch" — points at the network rather than at the
+ * missing variable. Detecting it lets the error say what to actually do.
+ */
+export const MISSING_API_BASE_URL = import.meta.env.PROD && !API_BASE_URL
+
+if (MISSING_API_BASE_URL) {
+  // eslint-disable-next-line no-console
+  console.error(
+    '[Lextract] VITE_API_BASE_URL is not set. This build will call /api on its ' +
+      'own origin, where no backend exists. Set it to your backend URL (e.g. ' +
+      'https://your-backend.onrender.com) in your host\'s environment variables ' +
+      'and redeploy — Vite inlines it at build time.',
+  )
+}
 
 const client = axios.create({
   baseURL: API_BASE_URL,
@@ -36,6 +66,20 @@ function toFriendlyError(error) {
     return new Error('Request timed out. The models may still be running — refresh in a moment.')
   }
   if (!error.response) {
+    if (MISSING_API_BASE_URL) {
+      return new Error(
+        'This deployment has no backend URL configured. Set VITE_API_BASE_URL ' +
+          'to your backend origin (e.g. https://your-backend.onrender.com) in ' +
+          'your hosting provider and redeploy — Vite inlines it at build time.',
+      )
+    }
+    if (API_BASE_URL) {
+      return new Error(
+        `Cannot reach the backend at ${API_BASE_URL}. If it is hosted on a free ` +
+          'tier it may be cold-starting, which can take up to a minute — retry. ' +
+          "Otherwise check the backend's CORS_ORIGINS includes this site's origin.",
+      )
+    }
     return new Error(
       'Cannot reach the backend. Is it running on http://localhost:8000? ' +
         'Start it with: uvicorn app.main:app --reload',
