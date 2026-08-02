@@ -1,0 +1,66 @@
+# ---------------------------------------------------------------------------
+# Lextract -- local stack.
+#
+#   docker compose up -d db      # just PostgreSQL, run the backend yourself
+#   docker compose up --build    # PostgreSQL + backend, migrations included
+#   docker compose down          # stop
+#   docker compose down -v       # stop AND delete the database volume
+#
+# The frontend stays outside Docker on purpose: `npm run dev` gives you hot
+# reload and Vite's proxy already forwards /api to localhost:8000. Containerising
+# it would cost you the fast feedback loop and buy nothing.
+# ---------------------------------------------------------------------------
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: lextract-db
+    environment:
+      POSTGRES_USER: lextract
+      POSTGRES_PASSWORD: lextract
+      POSTGRES_DB: lextract
+    ports:
+      # Published so you can also run the backend natively against this DB.
+      - "5432:5432"
+    volumes:
+      - lextract_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # The backend must not start until Postgres is genuinely accepting
+      # connections. Without this, `alembic upgrade head` races the database and
+      # fails roughly one start in three.
+      test: ["CMD-SHELL", "pg_isready -U lextract -d lextract"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lextract-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      # Your API keys. `environment:` below overrides DATABASE_URL from this
+      # file, because inside the compose network the host is `db`, not localhost.
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lextract:lextract@db:5432/lextract
+      UPLOAD_DIR: /app/dataset/bills
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+    ports:
+      - "8000:8000"
+    volumes:
+      # Bind-mount the dataset so uploaded bills land on your machine and
+      # survive `docker compose down`.
+      - ./dataset:/app/dataset
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    restart: unless-stopped
+
+volumes:
+  lextract_pgdata:

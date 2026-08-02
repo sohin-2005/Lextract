@@ -1,0 +1,8 @@
+Async Alembic environment for the Lextract backend.
+
+    alembic upgrade head                      # apply all migrations
+    alembic downgrade -1                      # roll back one
+    alembic revision --autogenerate -m "..."  # after editing app/models.py
+    alembic current                           # what is applied right now
+
+The database URL is read from backend/.env via app.config, not from alembic.ini.

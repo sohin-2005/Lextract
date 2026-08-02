@@ -1,0 +1,42 @@
+# ---------------------------------------------------------------------------
+# Lextract -- backend dependencies
+#
+# Lower bounds rather than exact pins: the LLM SDKs ship weekly and pinning
+# them to a patch release guarantees a broken install six months from now.
+# Upper bounds guard against the next major version's breaking changes.
+# Install with:  pip install -r requirements.txt
+# ---------------------------------------------------------------------------
+
+# --- Web framework ---------------------------------------------------------
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.32,<1.0
+python-multipart>=0.0.18          # multipart/form-data file uploads
+
+# --- Configuration & validation -------------------------------------------
+pydantic>=2.9,<3.0
+pydantic-settings>=2.6,<3.0
+
+# --- Database --------------------------------------------------------------
+SQLAlchemy>=2.0.36,<2.1
+alembic>=1.14,<2.0
+asyncpg>=0.30,<1.0                # async PostgreSQL driver
+greenlet>=3.0                     # required by SQLAlchemy's async bridge
+
+# --- LLM providers ---------------------------------------------------------
+google-genai>=1.0                 # supersedes the retired google-generativeai
+anthropic>=0.40
+openai>=1.60
+
+# --- Evaluation ------------------------------------------------------------
+thefuzz>=0.22
+python-Levenshtein>=0.25          # C backend; ~10x faster than pure-Python
+python-dateutil>=2.9
+
+# --- Images & HTTP ---------------------------------------------------------
+certifi>=2024.7.4                 # CA bundle; macOS python.org builds ship none
+pillow>=10.4
+httpx>=0.27
+
+# --- Tests -----------------------------------------------------------------
+pytest>=8.3
+pytest-asyncio>=0.24

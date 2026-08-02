@@ -1,0 +1,211 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: theme('fontFamily.sans');
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
+  }
+
+  /* Numbers in tables and stats must not jitter as values change. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    @apply bg-brand-100 text-brand-900;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500/60 ring-offset-2 ring-offset-white;
+  }
+
+  /* Respect the OS setting. The splash and ambience are decorative; nobody
+     should get motion sickness from a receipt tool. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* ---------------------------------------------------------------- surfaces */
+
+  /* Default surface. Slightly translucent over the page's soft ambience so the
+     background tint reads through — glass, but restrained enough to stay
+     legible on a projector. */
+  .card {
+    @apply rounded-card border border-slate-200/80 bg-white/85 shadow-card backdrop-blur-xl;
+  }
+
+  .card-flat {
+    @apply rounded-card border border-slate-200/80 bg-white shadow-card;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:border-brand-200 hover:shadow-lift;
+  }
+
+  /* The one loud surface. Reserved for a single primary metric per screen —
+     used more than once it stops signalling anything. */
+  .card-brand {
+    @apply relative overflow-hidden rounded-card bg-brand-deep text-white shadow-brand;
+  }
+
+  .card-brand::after {
+    content: '';
+    @apply pointer-events-none absolute inset-0;
+    background:
+      radial-gradient(120% 90% at 100% 0%, rgba(255, 255, 255, 0.28), transparent 60%),
+      radial-gradient(80% 60% at 0% 100%, rgba(255, 255, 255, 0.12), transparent 55%);
+  }
+
+  .card-tint {
+    @apply rounded-card border border-brand-100 bg-brand-soft;
+  }
+
+  .panel {
+    @apply rounded-panel border border-slate-200/80 bg-white/85 shadow-card backdrop-blur-xl;
+  }
+
+  /* ----------------------------------------------------------------- buttons */
+
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-xl px-4 py-2.5
+           text-sm font-medium leading-none transition-all duration-150
+           disabled:pointer-events-none disabled:opacity-45;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-deep text-white shadow-brand
+           hover:brightness-[1.10] active:scale-[0.985];
+  }
+
+  .btn-secondary {
+    @apply btn border border-slate-200 bg-white text-slate-700 shadow-sm
+           hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 active:scale-[0.985];
+  }
+
+  .btn-ghost {
+    @apply btn text-slate-500 hover:bg-slate-100 hover:text-slate-900;
+  }
+
+  .btn-danger-ghost {
+    @apply btn text-slate-400 hover:bg-rose-50 hover:text-rose-600;
+  }
+
+  .btn-sm {
+    @apply px-3 py-2 text-[13px];
+  }
+
+  /* ------------------------------------------------------------------ inputs */
+
+  .input {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm
+           text-slate-900 placeholder:text-slate-400
+           transition-colors focus:border-brand-400 focus:outline-none
+           focus:ring-4 focus:ring-brand-500/10;
+  }
+
+  .label {
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500;
+  }
+
+  /* ------------------------------------------------------------------ badges */
+
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1
+           text-[11px] font-medium leading-none;
+  }
+
+  .badge-brand {
+    @apply badge bg-brand-50 text-brand-700;
+  }
+
+  .badge-neutral {
+    @apply badge bg-slate-100 text-slate-600;
+  }
+
+  .badge-success {
+    @apply badge bg-emerald-50 text-emerald-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-amber-50 text-amber-700;
+  }
+
+  .badge-danger {
+    @apply badge bg-rose-50 text-rose-700;
+  }
+
+  /* --------------------------------------------------------------- structure */
+
+  .section-title {
+    @apply text-[15px] font-semibold tracking-[-0.01em] text-slate-900;
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-500;
+  }
+
+  .table-head {
+    @apply border-b border-slate-200 text-left text-[11px] font-semibold
+           uppercase tracking-[0.07em] text-slate-500;
+  }
+
+  .divider {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent;
+  }
+
+  /* Thin gradient meter used for accuracy bars. */
+  .meter {
+    @apply h-1.5 w-full overflow-hidden rounded-full bg-slate-100;
+  }
+
+  .meter-fill {
+    @apply h-full rounded-full bg-brand-gradient transition-[width] duration-700 ease-out;
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden rounded-lg bg-slate-100;
+  }
+
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0 -translate-x-full animate-shimmer;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  }
+}
+
+@layer utilities {
+  /* Ambient page wash. Two very soft brand blooms on a near-white field —
+     enough to keep the glass surfaces from looking grey, not enough to make
+     the page "a blue page". */
+  .page-ambience {
+    background-color: #f8fafc;
+    background-image:
+      radial-gradient(58rem 30rem at 12% -6%, rgba(4, 161, 229, 0.10), transparent 62%),
+      radial-gradient(46rem 26rem at 96% 2%, rgba(8, 180, 236, 0.09), transparent 58%);
+    background-attachment: fixed;
+  }
+
+  .text-gradient {
+    @apply bg-brand-gradient bg-clip-text text-transparent;
+  }
+
+  .sr-only-focusable:not(:focus):not(:focus-within) {
+    @apply sr-only;
+  }
+}

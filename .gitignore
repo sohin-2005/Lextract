@@ -1,0 +1,72 @@
+# ---------------------------------------------------------------------------
+# Secrets -- never commit these
+# ---------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+!.env.example
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+.venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Test / type-check caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# ---------------------------------------------------------------------------
+# Node / frontend
+# ---------------------------------------------------------------------------
+node_modules/
+frontend/dist/
+frontend/dist-ssr/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------------------------------------------------------------------------
+# Dataset
+#
+# Bill images stay OUT of git. They are photographs of real receipts and may
+# carry residual PII even after redaction, and they are sent to third-party
+# LLM APIs. ground_truth.json IS committed -- it is the answer key, and holds
+# only the fields we deliberately chose to record.
+# ---------------------------------------------------------------------------
+dataset/bills/*
+!dataset/bills/.gitkeep
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.heic
+!docs/images/*.png
+
+# ---------------------------------------------------------------------------
+# Editors & OS
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

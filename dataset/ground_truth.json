@@ -1,0 +1,30 @@
+[
+  {
+    "_comment": "TEMPLATE -- replace these three examples with your own bills. `bill_id` is the image filename without its extension. Delete any entry you have not filled in: a wrong answer key silently corrupts every score.",
+    "bill_id": "bill_01_grocery",
+    "vendor_name": "Sharma General Store",
+    "bill_number": null,
+    "date": "2024-03-15",
+    "amount": "245.50",
+    "currency": "INR",
+    "tax_gst_details": "GSTIN: 07AABCU9603R1ZX"
+  },
+  {
+    "bill_id": "bill_02_medical",
+    "vendor_name": "Kumar Medical Hall",
+    "bill_number": "1247",
+    "date": "2024-03-18",
+    "amount": "890.00",
+    "currency": "INR",
+    "tax_gst_details": "CGST 6% + SGST 6%"
+  },
+  {
+    "bill_id": "bill_03_auto",
+    "vendor_name": "Auto Rickshaw",
+    "bill_number": null,
+    "date": "2024-03-20",
+    "amount": "120.00",
+    "currency": "INR",
+    "tax_gst_details": null
+  }
+]
