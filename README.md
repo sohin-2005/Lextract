@@ -8,7 +8,7 @@ performance.
 
 ### → **[lextract-bay.vercel.app](https://lextract-bay.vercel.app)**
 
-![Lextract dashboard](assets/dashboard-light.png)
+![Lextract dashboard](assets/01-dashboard.png)
 
 > Hosted on free tiers. The API sleeps after ~15 minutes idle, so the first
 > request can take 30–60 seconds to wake it — the dashboard will show
@@ -45,7 +45,7 @@ how badly does it fail when it fails.
 - [API reference](#api-reference)
 - [Choosing which models to run](#choosing-which-models-to-run)
 - [Evaluation methodology](#evaluation-methodology)
-- [Results template](#results-template)
+- [Results](#results)
 - [Testing](#testing)
 - [Project structure](#project-structure)
 - [Troubleshooting](#troubleshooting)
@@ -68,25 +68,46 @@ how badly does it fail when it fails.
 
 ## Screenshots
 
-**Dashboard** — headline metrics, model picker, receipt list, leaderboard.
+**Dashboard** — headline metrics, upload zone and model picker. Exactly one
+card carries the accent; the moment two do, neither reads as the primary
+number.
 
-![Dashboard, light mode](assets/dashboard-light.png)
+![Dashboard](assets/01-dashboard.png)
 
-**Dark mode** — the theme follows your OS by default, with a manual override
-in the header.
+**Receipts** — every upload with its status, how many extraction runs it has,
+and whether ground truth exists yet. Run count matters: results are an
+append-only log, so a re-run adds a row rather than overwriting one.
 
-![Dashboard, dark mode](assets/dashboard-dark.png)
+![Receipt list](assets/02-receipts.png)
 
-**Bill detail** — the comparison grid. Rows are fields, columns are models;
-reading *across* a row shows which fields are hard for every model, which is
-the more actionable question.
+**Leaderboard** — per-field accuracy, latency and cost extrapolated to 100
+bills, with a plain-English recommendation that refuses to declare a winner on
+a sample too small to support one.
 
-![Bill detail with model comparison](assets/bill-detail.png)
+![Model leaderboard](assets/03-leaderboard.png)
 
-**Disagreements** — where models differ, at least one is wrong. Those fields
-are flagged before any ground truth exists, so they are the first place to look.
+**Comparison grid** — the original receipt beside every model's reading. Rows
+are fields, columns are models: reading *across* a row shows which fields are
+hard for every model, which is the more actionable question than which model
+is best overall.
 
-![Model disagreement panel](assets/disagreements.png)
+![Bill detail with model comparison](assets/04-comparison.png)
+
+**Ground truth and Zoho** — the answer key is typed against the image, then the
+extraction you trust is pushed to Zoho Books as an expense.
+
+![Ground truth entry and Zoho push](assets/05-ground-truth.png)
+
+**Disagreements** — where models differ, at least one is wrong. These fields
+are flagged *before* any ground truth exists, so they are the first place to
+look on a fresh dataset. Raw responses are kept underneath for auditing.
+
+![Model disagreements and raw responses](assets/06-disagreements.png)
+
+**Zoho Books sync** — the created expense id is stored, so a re-push is
+refused rather than silently duplicating the expense in your books.
+
+![Expense synced to Zoho Books](assets/07-zoho-synced.png)
 
 ---
 
@@ -737,31 +758,47 @@ with one wrong character is useless, so it must not earn fuzzy credit.
 
 ---
 
-## Results template
+## Results
 
-Fill this in after running your dataset (`GET /api/evaluation/report` gives you
-every number).
+Measured over 13 receipts, three models, `GET /api/evaluation/report`.
 
-| Model | Vendor acc | Amount acc | Date acc | Bill no. acc | Tax acc | Overall | Avg latency | Cost / 100 bills |
-|---|---|---|---|---|---|---|---|---|
-| `gemini-2.5-flash` | | | | | | | | |
-| `qwen/qwen3.6-27b` (Groq) | | | | | | | | |
-| `Llama-4-Maverick` (SambaNova) | | | | | | | | |
-| `pixtral-12b` (Mistral) | | | | | | | | |
-| `claude-haiku-4-5` | | | | | | | | |
-| `gpt-5-mini` | | | | | | | | |
+| Model | Overall | Vendor | Amount | Date | Avg latency | Cost / 100 bills | Bills |
+|---|---|---|---|---|---|---|---|
+| `gemini-3.5-flash` | **84.5%** | 84% | 77% | 92% | 4.12s | $0.32 | 13 |
+| `qwen/qwen3.6-27b` (Groq) | 68.5% | 61% | 54% | 55% | 11.72s | $0.15 | 11 |
+| `meta/llama-3.2-11b-vision-instruct` (NVIDIA) | 60.6% | 95% | 15% | 69% | 2.84s | $0.04 | 13 |
 
-**Bills evaluated:** ___  ·  **Date of run:** ___
+### What the numbers say
 
-**Observations to fill in:**
+**Overall accuracy hides the useful finding.** Llama 3.2 ranks last at 60.6%,
+yet it reads the **vendor name better than either other model** — 95% against
+Gemini's 84%. It collapses on `amount` (15%), which is what drags its average
+down. A single "which model is best" score would have buried that; the
+field-level breakdown is the whole reason the harness exists.
 
-- Which field was hardest across *all* models?
-- Did any model hallucinate rather than return null? Check
-  `match_type_counts` for `missing` on fields where truth was null.
-- Was the accuracy gap larger than ~10 points? Below that it is noise at this
-  sample size.
-- Which model would you pick, and under which of the conditions in
-  [METHODOLOGY §6](docs/METHODOLOGY.md#6-recommendation-framework)?
+That combination is also actionable: Llama is the cheapest and fastest of the
+three, so a pipeline could plausibly take vendor names from it and amounts from
+Gemini, at a fraction of running Gemini on everything.
+
+**Amount is the hardest field across the board** — 77% / 54% / 15%. On these
+receipts the total is usually the smallest, most-crowded handwriting on the
+page, and models tend to grab a line item or the subtotal instead.
+
+**Groq's latency is the outlier.** 11.72s against 2.84s for NVIDIA, on a
+platform whose entire proposition is speed. Its vision model is a reasoning
+model; even with thinking disabled it deliberates far longer per image than the
+others.
+
+**Treat the ranking cautiously.** 13 receipts puts the 95% confidence interval
+at roughly ±15 points, so the 16-point gap between Gemini and Qwen is
+suggestive but the 8-point gap between Qwen and Llama is not a ranking. The
+report says so itself rather than printing a confident order that will not
+replicate.
+
+**Cost per 100 bills spans 8×** — $0.04 to $0.32 — while accuracy spans 24
+points. Whether that trade is worth it depends entirely on whether a human
+reviews the output; see
+[METHODOLOGY §6](docs/METHODOLOGY.md#6-recommendation-framework).
 
 ### Before submitting
 
