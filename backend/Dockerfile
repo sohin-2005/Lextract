@@ -25,7 +25,11 @@ FROM python:3.12-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    # WORKDIR is /app, so PROJECT_ROOT resolves to "/" and the default upload
+    # directory would be /dataset/bills — which a non-root user cannot create.
+    # Pin it inside the image so a platform that sets no UPLOAD_DIR still boots.
+    UPLOAD_DIR=/app/dataset/bills
 
 # libpq is needed at runtime by asyncpg's fallbacks; curl powers HEALTHCHECK.
 RUN apt-get update \

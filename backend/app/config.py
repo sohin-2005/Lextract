@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 import os
+import tempfile
 from functools import lru_cache
 from pathlib import Path
 from typing import Final
@@ -247,28 +248,55 @@ class Settings(BaseSettings):
     @field_validator("upload_dir")
     @classmethod
     def _resolve_upload_dir(cls, value: Path) -> Path:
-        if not value.is_absolute():
-            value = PROJECT_ROOT / value
+        """Resolve and create the upload directory, degrading rather than dying.
 
-        value.mkdir(parents=True, exist_ok=True)
-        return value.resolve()
+        This runs at import. Raising here kills the process before any HTTP
+        server binds a port, which on a managed platform surfaces only as
+        "service unavailable" — the real cause buried in a traceback nobody
+        thinks to open. An unwritable path is a serious problem, but it is one
+        the running app should *report*, not one that should make it
+        unreachable.
+        """
+        path = value if value.is_absolute() else (PROJECT_ROOT / value)
+        path = path.resolve()
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            fallback = Path(tempfile.gettempdir()) / "lextract-uploads"
+            fallback.mkdir(parents=True, exist_ok=True)
+            logger.error(
+                "Cannot use UPLOAD_DIR=%s (%s). Falling back to %s — uploads will "
+                "NOT survive a restart. Point UPLOAD_DIR at a writable path, "
+                "ideally a persistent volume.",
+                path,
+                exc,
+                fallback,
+            )
+            return fallback
+        return path
 
     @model_validator(mode="after")
     def _require_two_providers(self) -> "Settings":
-        # Deliberately fatal: a one-model "comparison" is not a comparison, and
-        # failing at startup with a named cause beats a dashboard that silently
-        # benchmarks nothing. On a hosted platform this surfaces in the deploy
-        # logs — set ALLOW_SINGLE_PROVIDER=true if you really want one.
+        """Warn loudly when fewer than two providers are usable.
+
+        This used to raise. It should not, for the same reason as the upload
+        directory above: a config error that stops the process leaves a managed
+        platform with nothing to serve and the operator with nothing to read.
+        The app now boots, /api/health reports exactly which providers it found,
+        and the extraction endpoint refuses a request it cannot serve with a
+        message naming the missing key. A visible degraded state beats an
+        invisible dead one.
+        """
         if len(self.configured_providers) < 2 and not self.allow_single_provider:
-            raise ValueError(
-                "This project benchmarks LLMs against each other, so it needs at "
-                f"least 2 provider keys. Found {len(self.configured_providers)}: "
-                f"{self.configured_providers or 'none'}. Set any two of "
-                "GOOGLE_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, "
-                "SAMBANOVA_API_KEY, MISTRAL_API_KEY, NVIDIA_API_KEY or "
-                "MOONSHOT_API_KEY in backend/.env (and make sure the provider is "
-                "listed in ENABLED_PROVIDERS), or set "
-                "ALLOW_SINGLE_PROVIDER=true to bypass this check."
+            logger.error(
+                "Only %d usable provider(s): %s. A comparison needs at least 2. "
+                "Set two of GOOGLE_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, "
+                "GROQ_API_KEY, SAMBANOVA_API_KEY, MISTRAL_API_KEY, NVIDIA_API_KEY, "
+                "MOONSHOT_API_KEY or OPENROUTER_API_KEY, and make sure each is "
+                "listed in ENABLED_PROVIDERS (currently: %s).",
+                len(self.configured_providers),
+                self.configured_providers or "none",
+                self.enabled_providers or "<all>",
             )
         return self
 
