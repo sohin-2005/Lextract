@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -43,6 +44,15 @@ human-verified ground truth.
 5. `GET  /api/evaluation/report` -- accuracy, latency and cost leaderboard
 6. `POST /api/zoho/expenses` -- push the winning extraction into Zoho Books
 """
+
+def _safe_dsn(dsn: str) -> str:
+    """Render a DSN for logs with the password removed.
+
+    Connection strings end up in log aggregators; the host is the diagnostic
+    value, the password is a liability.
+    """
+    return re.sub(r"://([^:@/]+):[^@]*@", r"://\1:***@", dsn)
+
 
 def _configure_logging(level: str) -> None:
     logging.basicConfig(
@@ -79,23 +89,37 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
         # Tailor the advice: "run createdb" is useless inside a container, and
         # a localhost DSN in a deployed environment nearly always means the
         # platform's database variable never reached the process.
-        if os.getenv("DATABASE_URL"):
+        # Name the host being dialled. Whether the variable is "set" is far less
+        # useful than where it actually points — a value of "localhost" and an
+        # unset variable produce the same failure but have different fixes.
+        target = _safe_dsn(settings.database_url)
+        env_set = bool(os.getenv("DATABASE_URL"))
+
+        if "localhost" in settings.database_url or "127.0.0.1" in settings.database_url:
             hint = (
-                "DATABASE_URL is set but unreachable. Check the database service is "
-                "running and that the value points at its INTERNAL host, not a "
-                "localhost or public-proxy address."
+                "That is a LOCALHOST address — there is no database inside this "
+                "container. "
+                + (
+                    "DATABASE_URL is set, but to a local address; replace it with "
+                    "the database service's INTERNAL host."
+                    if env_set
+                    else "DATABASE_URL is unset, so the local-development default "
+                    "was used."
+                )
+                + " On Railway: add a PostgreSQL service, then set "
+                "DATABASE_URL=${{Postgres.DATABASE_URL}} (the service name must "
+                "match exactly), or paste the postgres.railway.internal value."
             )
-        elif "localhost" in settings.database_url or "127.0.0.1" in settings.database_url:
+        elif env_set:
             hint = (
-                "DATABASE_URL is NOT set, so the local-development default "
-                "(localhost:5432) was used — there is no database at that address "
-                "in a container. On Railway add a PostgreSQL service and set "
-                "DATABASE_URL=${{Postgres.DATABASE_URL}}; on Render paste the "
-                "internal connection string."
+                "The host resolved but refused the connection. Check the database "
+                "service is running, is in the SAME project/environment, and that "
+                "you used its internal host rather than the public proxy."
             )
         else:
             hint = "Run: createdb lextract && alembic upgrade head"
-        logger.warning("Could not reach the database (%s). %s", exc, hint)
+
+        logger.warning("Could not reach the database at %s (%s). %s", target, exc, hint)
 
     yield
     await dispose_engine()
