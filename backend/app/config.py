@@ -255,6 +255,10 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _require_two_providers(self) -> "Settings":
+        # Deliberately fatal: a one-model "comparison" is not a comparison, and
+        # failing at startup with a named cause beats a dashboard that silently
+        # benchmarks nothing. On a hosted platform this surfaces in the deploy
+        # logs — set ALLOW_SINGLE_PROVIDER=true if you really want one.
         if len(self.configured_providers) < 2 and not self.allow_single_provider:
             raise ValueError(
                 "This project benchmarks LLMs against each other, so it needs at "

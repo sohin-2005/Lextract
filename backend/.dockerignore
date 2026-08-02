@@ -7,6 +7,7 @@ venv/
 .mypy_cache/
 .ruff_cache/
 tests/
+# start.sh must ship in the image.
 # Receipt images are part of the repo but not of the image — they are user
 # data, and baking 15 MB of them into every build slows deploys for nothing.
 ../dataset/bills/*

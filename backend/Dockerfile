@@ -42,7 +42,11 @@ RUN pip install --no-index --find-links=/wheels -r requirements.txt && rm -rf /w
 
 COPY --chown=lextract:lextract . .
 
-RUN mkdir -p /app/dataset/bills && chown -R lextract:lextract /app/dataset
+RUN mkdir -p /app/dataset/bills \
+    && chown -R lextract:lextract /app/dataset \
+    # Git on Windows drops the executable bit; set it explicitly so the
+    # image boots regardless of where it was checked out.
+    && chmod +x /app/start.sh
 USER lextract
 
 # Railway, Render, Fly and Cloud Run all inject $PORT and route to it. The
@@ -52,9 +56,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD curl -fsS "http://localhost:${PORT:-8000}/api/health" || exit 1
 
-# Shell form on purpose: the exec form does not expand ${PORT}, so an exec-form
-# CMD would have uvicorn listen on the literal string "$PORT" and the platform
-# health check would never pass. Migrations run first so a schema change ships
-# with the code that needs it.
-CMD alembic upgrade head && \
-    uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+# start.sh runs migrations then execs uvicorn on $PORT. It deliberately does
+# NOT chain them with `&&` — see the comment in that file for why a failed
+# migration must not stop the server from binding the port.
+CMD ["./start.sh"]
