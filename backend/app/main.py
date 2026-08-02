@@ -140,13 +140,20 @@ def create_app() -> FastAPI:
     )
 
     # Vite serves on 5173; the extra origins cover CRA and 127.0.0.1 variants.
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origin_list,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    # allow_origin_regex exists for preview deployments: Vercel mints a new
+    # random hostname per commit, so an exact list covers production and nothing
+    # else, and every preview fails CORS in a way that looks like a backend bug.
+    cors_kwargs: dict[str, object] = {
+        "allow_origins": settings.cors_origin_list,
+        "allow_credentials": True,
+        "allow_methods": ["*"],
+        "allow_headers": ["*"],
+    }
+    if regex := settings.cors_origin_regex.strip():
+        cors_kwargs["allow_origin_regex"] = regex
+        logger.info("CORS also allowing origins matching %s", regex)
+
+    app.add_middleware(CORSMiddleware, **cors_kwargs)
 
     app.include_router(bills.router)
     app.include_router(extraction.router)

@@ -190,6 +190,16 @@ class Settings(BaseSettings):
     upload_dir: Path = Field(default=Path("/tmp/bills"))
     max_image_size_mb: int = 10
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000"
+    cors_origin_regex: str = Field(
+        default="",
+        description=(
+            "Regex of additional allowed origins. Vercel gives every preview "
+            "deployment a fresh random hostname, so an exact-match list can only "
+            "ever cover production. Example: "
+            r"https://.*\.vercel\.app  — scope it to your own project rather "
+            "than all of vercel.app if the API is not public."
+        ),
+    )
     log_level: str = "INFO"
 
     # ----------------------------------------------------------- validators
