@@ -10,16 +10,16 @@ performance.
 
 ![Lextract dashboard](assets/01-dashboard.png)
 
-> Hosted on free tiers. The API sleeps after ~15 minutes idle, so the first
-> request can take 30–60 seconds to wake it — the dashboard will show
-> "API offline" until it does. Reload once and it connects.
+> Hosted on free tiers, so the first request after a quiet period may take a
+> few seconds while the API wakes. If the dashboard shows "API offline",
+> reload once.
 >
 > | | |
 > |---|---|
 > | Frontend | https://lextract-bay.vercel.app |
-> | API | https://lextract-7gvy.onrender.com |
-> | API docs | https://lextract-7gvy.onrender.com/docs |
-> | Health | https://lextract-7gvy.onrender.com/api/health |
+> | API | https://hopeful-art-production-f001.up.railway.app |
+> | API docs | https://hopeful-art-production-f001.up.railway.app/docs |
+> | Health | https://hopeful-art-production-f001.up.railway.app/api/health |
 
 Extract structured accounting data from photographs of **handwritten Indian
 bills** using several vision LLMs, score every model against human ground truth
@@ -542,8 +542,11 @@ point at the `db` service, so the value in your `.env` only affects native runs.
 
 ## Deploying
 
-The live instance runs the frontend on Vercel and the API on Render:
-**https://lextract-bay.vercel.app** → **https://lextract-7gvy.onrender.com**.
+The live instance runs the frontend on Vercel and the API on Railway:
+**https://lextract-bay.vercel.app** → **https://hopeful-art-production-f001.up.railway.app**
+
+Render instructions are kept below as an alternative; the Railway section is the
+one that matches the deployment above.
 
 
 The Vite dev proxy is a **dev-server feature**. It does not exist in a built
@@ -553,7 +556,7 @@ bundle, so a deployed frontend must be told where the backend lives.
 
 | Setting | Value |
 |---|---|
-| Environment variable | `VITE_API_BASE_URL` = `https://<your-backend>.onrender.com` |
+| Environment variable | `VITE_API_BASE_URL` = `https://<your-backend>.up.railway.app` |
 | Build command | `npm run build` |
 | Output directory | `dist` |
 | Root directory | `frontend` |
@@ -583,6 +586,7 @@ database as `DATABASE_URL` in `postgresql://` form; the app rewrites it to
 ```
 DATABASE_URL      = ${{Postgres.DATABASE_URL}}
 CORS_ORIGINS      = https://<your-app>.vercel.app
+CORS_ORIGIN_REGEX = https://<your-project>-.*\.vercel\.app
 ENABLED_PROVIDERS = gemini,groq,nvidia
 GOOGLE_API_KEY    = …
 GROQ_API_KEY      = …
@@ -590,6 +594,10 @@ NVIDIA_API_KEY    = …
 ```
 
 Do **not** set `PORT` yourself — Railway injects it.
+
+`CORS_ORIGIN_REGEX` matters because Vercel gives every preview deployment a new
+random hostname. An exact-match `CORS_ORIGINS` list covers production and
+nothing else, so previews fail CORS in a way that looks like a backend fault.
 
 ### Backend (Render)
 
@@ -624,7 +632,7 @@ Three things that bite on free tiers:
 ### Verifying
 
 ```bash
-curl https://<your-backend>.onrender.com/api/health
+curl https://<your-backend>.up.railway.app/api/health
 ```
 
 Should return `configured_providers` and `database: connected`. If that works
