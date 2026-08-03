@@ -54,6 +54,16 @@ class Settings(BaseSettings):
 
     # ---------------------------------------------------------- LLM secrets
     google_api_key: str | None = Field(default=None, description="Google AI Studio key.")
+    google_api_key_2: str | None = Field(
+        default=None,
+        description=(
+            "Optional standby Google AI Studio key. Gemini's free tier is "
+            "generous but finite, and a benchmark sweep can exhaust it "
+            "mid-run. When the primary key returns a quota or rate-limit "
+            "error the client retries the same call on this one, so a "
+            "comparison does not lose its cheapest model halfway through."
+        ),
+    )
     anthropic_api_key: str | None = Field(default=None, description="console.anthropic.com key.")
     openai_api_key: str | None = Field(default=None, description="platform.openai.com key.")
 
@@ -316,7 +326,9 @@ class Settings(BaseSettings):
     def configured_providers(self) -> list[str]:
         """Provider slugs that have a non-empty API key."""
         pairs = (
-            ("gemini", self.google_api_key),
+            # Either Gemini key on its own is enough to make the provider
+            # usable, so test the resolved list rather than the primary field.
+            ("gemini", self.google_api_key_list[0] if self.google_api_key_list else None),
             ("claude", self.anthropic_api_key),
             ("openai", self.openai_api_key),
             ("groq", self.groq_api_key),
@@ -346,6 +358,20 @@ class Settings(BaseSettings):
                 self.zoho_organization_id,
             )
         )
+
+    @property
+    def google_api_key_list(self) -> list[str]:
+        """Every configured Gemini key, primary first and standbys after.
+
+        A plain property rather than a ``computed_field`` on purpose: computed
+        fields are serialised with the model, and a list of live API keys has no
+        business being one ``model_dump()`` away from a response body.
+        """
+        return [
+            key.strip()
+            for key in (self.google_api_key, self.google_api_key_2)
+            if key and key.strip()
+        ]
 
     @property
     def enabled_provider_list(self) -> list[str]:

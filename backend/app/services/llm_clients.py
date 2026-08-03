@@ -123,6 +123,33 @@ class LLMResponseError(LLMError):
     """The call succeeded but the body was not usable JSON."""
 
 
+#: Substrings that mark an error as "this key is out of budget" rather than
+#: "this request was wrong". Providers spell it several ways -- Google returns
+#: RESOURCE_EXHAUSTED, most OpenAI-compatible services return a 429 -- and none
+#: of them expose a machine-readable code through the SDK exception, so the
+#: message text is what there is to go on.
+_QUOTA_MARKERS: Final[tuple[str, ...]] = (
+    "resource_exhausted",
+    "resource exhausted",
+    "quota",
+    "rate limit",
+    "rate_limit",
+    "ratelimit",
+    "too many requests",
+    "429",
+)
+
+
+def is_quota_error(message: str) -> bool:
+    """True when a provider error reads as an exhausted key rather than a bug.
+
+    Deliberately generous: a false positive costs one extra call on a standby
+    key, while a false negative aborts the run the standby exists to rescue.
+    """
+    lowered = message.lower()
+    return any(marker in lowered for marker in _QUOTA_MARKERS)
+
+
 # --------------------------------------------------------------------------
 # Result container
 # --------------------------------------------------------------------------
@@ -164,12 +191,25 @@ class UnifiedLLMClient(abc.ABC):
     #: for cost, just not compressed to a hard budget.
     max_image_b64_bytes: int | None = None
 
-    def __init__(self, *, api_key: str, model_name: str, settings: Settings) -> None:
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        model_name: str,
+        settings: Settings,
+        fallback_api_keys: list[str] | None = None,
+    ) -> None:
         if not api_key or not api_key.strip():
             raise LLMConfigurationError(
                 f"No API key configured for provider '{self.provider.value}'."
             )
         self._api_key = api_key.strip()
+        #: Standby keys for the same provider, tried in order when the primary
+        #: is refused for quota reasons. Empty for every provider that does not
+        #: opt in -- see :func:`build_client`.
+        self._fallback_api_keys = [
+            key.strip() for key in (fallback_api_keys or []) if key and key.strip()
+        ]
         self._model_name = model_name
         self._settings = settings
 
@@ -626,11 +666,42 @@ class GeminiClient(UnifiedLLMClient):
                 "google-genai is not installed. Run: pip install -r requirements.txt"
             ) from exc
 
-        client = genai.Client(api_key=self._api_key)
         contents = [
             types.Part.from_bytes(data=self._decode(image_b64), mime_type=mime_type),
             self._prompt(extra_instruction),
         ]
+
+        # Primary key first, standbys after. Only a quota refusal advances to
+        # the next key: a bad model ID or a malformed image will fail
+        # identically on every key, so retrying those just burns the standby's
+        # allowance to reach the same error.
+        keys = [self._api_key, *self._fallback_api_keys]
+        for index, api_key in enumerate(keys):
+            try:
+                return await self._invoke_with_key(genai, types, api_key, contents)
+            except LLMInvocationError as exc:
+                is_last = index + 1 >= len(keys)
+                if is_last or not is_quota_error(str(exc)):
+                    raise
+                logger.warning(
+                    "Gemini key %d of %d is out of quota (%s); switching to the "
+                    "next configured key.",
+                    index + 1,
+                    len(keys),
+                    exc,
+                )
+
+        # Unreachable: __init__ guarantees a non-empty primary key, so the loop
+        # above always either returns or raises.
+        raise LLMInvocationError(  # pragma: no cover - defensive
+            "No Gemini API key was available to call."
+        )
+
+    async def _invoke_with_key(
+        self, genai: Any, types: Any, api_key: str, contents: list[Any]
+    ) -> tuple[str, int | None, int | None]:
+        """Run one full generate_content attempt against a single API key."""
+        client = genai.Client(api_key=api_key)
 
         # Gemini 2.5+ thinks by default, and thinking tokens are charged against
         # max_output_tokens -- so the model can reason itself out of budget and
@@ -1183,15 +1254,29 @@ def build_client(provider: ModelProvider | str, settings: Settings) -> UnifiedLL
         )
 
     key_attr, model_attr, env_var = PROVIDER_SETTINGS[key]
-    api_key = getattr(settings, key_attr)
     model_name = getattr(settings, model_attr)
+
+    extra: dict[str, Any] = {}
+    if key is ModelProvider.GEMINI:
+        # Gemini is the one provider people run on a free tier, so it is the
+        # one that actually runs out mid-benchmark. GOOGLE_API_KEY_2 is picked
+        # up here as a standby; the first key present is the primary, so
+        # setting only the second one still works.
+        gemini_keys = settings.google_api_key_list
+        api_key = gemini_keys[0] if gemini_keys else None
+        extra["fallback_api_keys"] = gemini_keys[1:]
+        env_var = f"{env_var} (or GOOGLE_API_KEY_2)"
+    else:
+        api_key = getattr(settings, key_attr)
 
     if not api_key:
         raise LLMConfigurationError(
             f"Provider '{key.value}' requested but {env_var} is not set in backend/.env."
         )
 
-    return _CLIENT_REGISTRY[key](api_key=api_key, model_name=model_name, settings=settings)
+    return _CLIENT_REGISTRY[key](
+        api_key=api_key, model_name=model_name, settings=settings, **extra
+    )
 
 
 def configured_models(settings: Settings) -> dict[str, str]:

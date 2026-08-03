@@ -5,6 +5,7 @@ import {
   BarChart3,
   CheckCircle2,
   Clock,
+  Eye,
   FileText,
   Gauge,
   Layers,
@@ -429,12 +430,27 @@ export default function Dashboard() {
                 {bills.map((bill) => (
                   <tr key={bill.id} className="group transition-colors hover:bg-teal-50/50 dark:hover:bg-teal-900/15">
                     <td className="py-3 pr-4">
-                      <Link
-                        to={`/bills/${bill.id}`}
-                        className="font-medium text-ink-800 dark:text-paper-100 transition-colors hover:text-teal-700 dark:hover:text-teal-300"
-                      >
-                        {bill.filename}
-                      </Link>
+                      <div className="flex items-center gap-2.5">
+                        <Link
+                          to={`/bills/${bill.id}`}
+                          className="font-medium text-ink-800 dark:text-paper-100 transition-colors hover:text-teal-700 dark:hover:text-teal-300"
+                        >
+                          {bill.filename}
+                        </Link>
+                        {/* Once a receipt is scored, opening it is the next
+                            thing you want to do — an explicit button says so,
+                            where a filename that happens to be a link does not. */}
+                        {bill.status === 'completed' && (
+                          <Link
+                            to={`/bills/${bill.id}`}
+                            className="btn-secondary btn-sm shrink-0"
+                            title={`View ${bill.filename} and its extraction details`}
+                            aria-label={`View ${bill.filename} and its extraction details`}
+                          >
+                            <Eye size={13} /> View
+                          </Link>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 pr-4">
                       <StatusBadge status={bill.status} />
